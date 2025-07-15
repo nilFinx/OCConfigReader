@@ -38,7 +38,7 @@ local kexts = {}
 local kextsalt = {}
 local tools = {}
 
-local kextsshow = {normal = {}, plugin = {}}
+local kextsshow = {normal = {}, plugin = {}, disabled = {}}
 
 local function kitchensinked(...)
 	local tocheck = {...}
@@ -84,9 +84,7 @@ for _, v in pairs(plist.Kernel.Add) do
 	local kextname = v.BundlePath:match "/?([a-zA-Z0-9]+).kext$"
 	kexts[kextname] = v
 	table.insert(kextsalt, kextname)
-	if v:match("/") then
-		table.insert(kextsshow.plugin, kextname)
-	end
+	table.insert(kextsshow[v.Enabled and (v.BundlePath:match("/") and "plugin" or "normal") or "disabled"], kextname)
 end
 
 for _, v in pairs(plist.Misc.Tools) do
@@ -95,20 +93,21 @@ end
 
 section() -- Info, nothing too bad
 
-check "Kexts:"
-for i = 1, #kextsalt, 2 do
-	check(kextsalt[i].." "..(kextsalt[i+1] or ""))
+local function show(name, tbl)
+	check(name..":")
+	for i = 1, #tbl, 2 do
+		check(tbl[i].." "..(tbl[i+1] or ""))
+	end
+	print ""
 end
 
-check "\nSSDTs:"
-for i = 1, #ssdtalt, 2 do
-	check(ssdtalt[i].." "..(ssdtalt[i+1] or ""))
-end
+show("Kexts", kextsshow.normal)
+show("Kexts (plugin)", kextsshow.plugin)
+show("Kexts (disabled)", kextsshow.disabled)
 
-check "\nDrivers:"
-for i = 1, #driversalt, 2 do
-	check(driversalt[i].." "..(driversalt[i+1] or ""))
-end
+show("SSDTs", ssdtalt)
+
+show("Drivers", driversalt)
 
 for _, v in pairs(plist.Kernel.Patch) do
 	if v.Comment:match("AuthenticAMD") then
@@ -260,6 +259,10 @@ if ssdts["SSDT-EC"] then
 	end
 end
 
+if not (kexts.VirtualSMC and kexts.VirtualSMC.Enabled) then
+	check "VirtualSMC is absent or disabled"
+end
+
 section() -- Prebuilt/autotool/configurator
 
 for _, v in pairs(plist.Kernel.Add) do
@@ -269,7 +272,7 @@ for _, v in pairs(plist.Kernel.Add) do
 end
 
 if string.match(data, "<data>[	 \n]+[a-zA-Z0-9=+/]+[ 	\n]+</data>") then
-	check "Detected <data> with newline/whitespaces before </data>"
+	check "Detected <data> with newline/whitespaces before </data> (can be enabled with ProperTree's option)"
 end
 
 -- Thanks CorpNewt! -- DEAD: Thanks shitlify dev!
@@ -277,6 +280,11 @@ end
 	and plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["prev-lang:kbd"] == "en:252" then
 	check "Failed specific autotool detection"
 end]]
+
+-- I will nuke israel if they patched this
+if plist.Misc.Boot.PickerMode == "External" and plist.Misc.Boot.PickerVariant == "Auto" then
+	check "Failed specific autotool detection"
+end
 
 if type(plist.UEFI.Drivers[1]) == "string" then
 	check "OpenCore is outdated(old Drivers schema)"
