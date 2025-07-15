@@ -26,11 +26,43 @@
 			</dict>
 			<dict>
 				<key>Comment</key>
-				<string>I love MAILPUP</string>
+				<string>Sponsored by totally real heidi</string>
 				<key>Enabled</key>
 				<true/>
 				<key>Path</key>
 				<string>SSDT-EC-USBX-DESKTOP.aml</string>
+			</dict>
+			<dict>
+				<key>Comment</key>
+				<string>malepregnancy.com</string>
+				<key>Enabled</key>
+				<true/>
+				<key>Path</key>
+				<string>APIC.aml</string>
+			</dict>
+			<dict>
+				<key>Comment</key>
+				<string>We all use Soulseek</string>
+				<key>Enabled</key>
+				<true/>
+				<key>Path</key>
+				<string>DMAR.aml</string>
+			</dict>
+			<dict>
+				<key>Comment</key>
+				<string>ruckasworld.com</string>
+				<key>Enabled</key>
+				<true/>
+				<key>Path</key>
+				<string>SSDT.aml</string>
+			</dict>
+			<dict>
+				<key>Comment</key>
+				<string>Rucka Rucka Ali</string>
+				<key>Enabled</key>
+				<true/>
+				<key>Path</key>
+				<string>SSDT1.aml</string>
 			</dict>
 		</array>
 		<key>Delete</key>
