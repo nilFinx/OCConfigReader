@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>yo</key>
+	<array>
+		<string>yoyo</string>
+	</array>
+	<key>This is true</key>
+	<true/>
+	<key>This is false</key>
+	<false/>
+	<key>SO</key>
+	<data>NiH//w==</data>
+	<key>ilovemailpup</key>
+	<string>Hello there!</string>
+	<key>IHAVEAUTUMN</key>
+	<dict>
+		<key>CF$UID</key>
+		<integer>1234152</integer>
+	</dict>
+	<key>hey</key>
+	<dict>
+		<key>This is table</key>
+		<string>Heyo</string>
+	</dict>
+	<key>HELP</key>
+	<integer>3621</integer>
+	<key>CREATIVE</key>
+	<date>2021-03-06T01:36:21Z</date>
+</dict>
+</plist>
