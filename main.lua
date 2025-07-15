@@ -37,6 +37,7 @@ local driversalt = {}
 local kexts = {}
 local kextsalt = {}
 local tools = {}
+local toolsalt = {}
 
 local kextsshow = {normal = {}, plugin = {}, disabled = {}}
 
@@ -64,31 +65,36 @@ local function kitchensinkedwithmsg(msg, ...) -- MONOSODIUM GLUTAMATE!!!
 end
 
 for _, v in pairs(plist.ACPI.Add) do
-	ssdts[v.Path:match("(.+).aml")] = true
-	table.insert(ssdtalt, v.Path:match("(.+).aml"))
+	local ssdtname = v.Path:match("(.+).aml")
+	ssdts[ssdtname] = true
+	table.insert(ssdtalt, ssdtname)
 end
 
 if type(plist.UEFI.Drivers[1]) == "string" then
 	for _, v in pairs(plist.UEFI.Drivers) do
-		drivers[v:match("(.+).efi")] = true
-		table.insert(driversalt, v:match("(.+).efi"))
+		local drvname = v:match("(.+).efi")
+		drivers[drvname] = true
+		table.insert(driversalt, drvname)
 	end
 else
 	for _, v in pairs(plist.UEFI.Drivers) do
-		drivers[v.Path:match("(.+).efi")] = true
-		table.insert(driversalt, v.Path:match("(.+).efi"))
+		local drvname = v.Path:match("(.+).efi")
+		drivers[drvname] = true
+		table.insert(driversalt, drvname)
 	end
 end
 
 for _, v in pairs(plist.Kernel.Add) do
-	local kextname = v.BundlePath:match "/?([a-zA-Z0-9]+).kext$"
+	local kextname = v.BundlePath:match "/?([-a-zA-Z0-9_]+).kext$"
 	kexts[kextname] = v
 	table.insert(kextsalt, kextname)
 	table.insert(kextsshow[v.Enabled and (v.BundlePath:match("/") and "plugin" or "normal") or "disabled"], kextname)
 end
 
 for _, v in pairs(plist.Misc.Tools) do
-	tools[v.Path:match("(.+).efi")] = true
+	local toolname = v.Path:match("(.+).efi")
+	tools[toolname] = true
+	table.insert(toolsalt, toolname)
 end
 
 section() -- Info, nothing too bad
@@ -108,6 +114,8 @@ show("Kexts (disabled)", kextsshow.disabled)
 show("SSDTs", ssdtalt)
 
 show("Drivers", driversalt)
+
+show("Tools", toolsalt)
 
 for _, v in pairs(plist.Kernel.Patch) do
 	if v.Comment:match("AuthenticAMD") then
@@ -260,14 +268,18 @@ if ssdts["SSDT-EC"] then
 end
 
 if not (kexts.VirtualSMC and kexts.VirtualSMC.Enabled) then
-	check "VirtualSMC is absent or disabled"
+	check("VirtualSMC is "..(kexts.VirtualSMC and "disabled" or "absent"))
+end
+
+if ssdts.APIC and ssdts.DMAR and ssdts.SSDT1 and ssdts.SSDT then
+	check "Machine's ACPI tables are being injected"
 end
 
 section() -- Prebuilt/autotool/configurator
 
 for _, v in pairs(plist.Kernel.Add) do
 	if v.Arch == "x86_64" then
-		check "Arch is set to x86_64" break
+		check "One or more Kext arch is set to x86_64" break
 	end
 end
 
@@ -290,10 +302,6 @@ if type(plist.UEFI.Drivers[1]) == "string" then
 	check "OpenCore is outdated(old Drivers schema)"
 end
 
-if ssdts["MaLd0n"] then
-	check "MaLd0n.aml is present"
-end
-
 for _, v in pairs(kexts) do
 	if v.Comment:match("V[0-9.]+") then
 		check "One or more Kext comment has a version" break
@@ -305,5 +313,13 @@ for _, v in pairs(kexts) do
 		check "One or more Kext comment is empty" break
 	end
 end
+
+if ssdts["MaLd0n"] then
+	check "MaLd0n.aml is present"
+end
+
+if plist.ACPI.Quirks.RebaseRegions then -- https://www.insanelymac.com/forum/topic/352881-when-is-rebaseregions-necessary/#findComment-2790821
+	check "The user is a porno pro"     -- Don't need this quirk = Porno Amateur
+end 									-- Need this quirk = Porno Pro 
 
 print()
