@@ -1,2 +1,0 @@
-
-All VI2C plugins
