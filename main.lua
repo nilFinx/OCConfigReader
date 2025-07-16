@@ -127,12 +127,16 @@ print()
 
 sectionheader = "Basic information" -- Info, nothing too bad
 
+local function prnt(txt)
+	check(txt or "", false)
+end
+
 local function show(name, tbl)
-	check(name..":", false)
+	prnt(name..":")
 	for i = 1, #tbl, 4 do
-		check(tbl[i].." "..(tbl[i+1] or "").." "..(tbl[i+2] or "").." "..(tbl[i+3] or ""), false)
+		prnt(tbl[i].." "..(tbl[i+1] or "").." "..(tbl[i+2] or "").." "..(tbl[i+3] or ""))
 	end
-	check("", false)
+	prnt("")
 end
 
 show("Kexts", kextsshow.normal)
@@ -144,6 +148,19 @@ show("SSDTs", ssdtalt)
 show("Drivers", driversalt)
 
 show("Tools", toolsalt)
+
+prnt("DeviceProperties: ")
+for k, v in pairs(plist.DeviceProperties.Add) do
+	prnt(k)
+	for l, w in pairs(v) do
+		local symbol = " |"
+		prnt(symbol..l..": "..tostring(w))
+	end
+end
+prnt()
+
+check("SecureBootModel is "..plist.Misc.Security.SecureBootModel, false)
+check("SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName, false)
 
 ck()for _, v in pairs(plist.Kernel.Patch) do
 	if v.Comment:match("AuthenticAMD") then
@@ -164,8 +181,9 @@ ck()if drivers["OpenCanopy.efi"] then
 	check "OpenCanopy is present (should be post-install stuff)"
 end
 
-check("SecureBootModel is "..plist.Misc.Security.SecureBootModel, false)
-check("SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName, false)
+ck() if plist.Kernel.Quirks.AppleXcpmCfgLock or plist.Kernel.Quirks.AppleCpuPmCfgLock then
+	check "CFGLock is enabled"
+end
 
 section("Mild oddities") -- Oddness/not advisable
 
@@ -302,6 +320,13 @@ end
 
 ck()if ssdts.APIC and ssdts.DMAR and ssdts.SSDT1 and ssdts.SSDT then
 	check "Machine's ACPI tables are being injected"
+end
+
+ck()for k in pairs(plist.DeviceProperties) do
+	if k ~= "Add" and k ~= "Delete" and k:sub(1,1) ~= "#" then
+		check(k.." is found in DeviceProperties, outside of Add/Delete")
+		break
+	end
 end
 
 section("Autotool/prebuilt/configurator") -- Prebuilt/autotool/configurator
