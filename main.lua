@@ -64,9 +64,9 @@ local toolsalt = {}
 
 local kextsshow = {normal = {}, plugin = {}, disabled = {}}
 
-local function kitchensinked(...)
-	local tocheck = {...}
+local function _kitchensinked_internal(...)
 	ck()
+	local tocheck = {...}
 	for k, v in pairs(tocheck) do
 		local match = table.concat(kextsalt, " "):match(v)
 		if not match then -- Allows rough match
@@ -74,19 +74,20 @@ local function kitchensinked(...)
 		end
 		tocheck[k] = match -- Make sure to use the regex result
 	end
-	check(table.concat(tocheck, ", ").." are all present")
+	return tocheck
+end
+
+local function kitchensinked(...)
+	local tocheck = _kitchensinked_internal(...)
+	if tocheck then
+		check(table.concat(tocheck, ", ").." are all present")
+	end
 end
 local function kitchensinkedwithmsg(msg, ...) -- MONOSODIUM GLUTAMATE!!!
-	local tocheck = {...}
-	ck()
-	for k, v in pairs(tocheck) do
-		local match = table.concat(kextsalt, " "):match(v)
-		if not match then -- Allows rough match
-			return
-		end
-		tocheck[k] = match -- Make sure to use the regex result
+	local tocheck = _kitchensinked_internal(...)
+	if tocheck then
+		check(msg)
 	end
-	check(msg)
 end
 
 for _, v in pairs(plist.ACPI.Add) do
@@ -240,6 +241,8 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 local trigger = false
+local hasutb = false
+local hastoolbox = false
 ck()for k in pairs(kexts) do -- I'll combine both as one check, as only one of them can trigger at a time.
 	if k == "USBMap" or k == "UTBMap" or k == "USBPorts" or k == "UTBDefault" or k == "USBInjectAll" then
 		if trigger then
@@ -249,8 +252,6 @@ ck()for k in pairs(kexts) do -- I'll combine both as one check, as only one of t
 		trigger = true
 	end
 end
-local hasutb = false
-local hastoolbox = false
 ck()for k in pairs(kexts) do
 	if k == "UTBMap" or k == "UTBDefault" then
 		hasutb = true
