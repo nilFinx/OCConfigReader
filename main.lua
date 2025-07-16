@@ -1,12 +1,17 @@
 #!/usr/bin/env lua
+if _VERSION == "Lua 5.1" then
+	print "LuaJIT/5.1 is unsupported"
+	os.exit(1)
+end
+
 if not arg[1] then
-	print("OCConfigReader <path/to/config.plist>")
+	print "OCConfigReader <path/to/config.plist>"
 	os.exit(1)
 end
 
 local f = io.open(arg[1])
 if not f then
-	print("Failed to open file (Wrong path?)")
+	print "Failed to open file (Wrong path?)"
 	os.exit(1)
 end
 local data = f:read("a")
@@ -14,7 +19,6 @@ f:close()
 
 local plist = require "floxlist"(data)
 
-local detected = true
 local detectedamount = 0
 local checkamount = 0
 local textstack = ""
