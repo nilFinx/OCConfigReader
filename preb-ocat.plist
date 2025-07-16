@@ -234,6 +234,11 @@
 	</dict>
 	<key>DeviceProperties</key>
 	<dict>
+		<key>PciRoot(0x0)/Pci(0x17,0x0)</key>
+		<dict>
+			<key>compatible</key>
+			<string>pci8086,a182</string>
+		</dict>
 		<key>Add</key>
 		<dict>
 			<key>PciRoot(0x0)/Pci(0x17,0x0)</key>
