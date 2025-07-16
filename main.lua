@@ -12,21 +12,40 @@ end
 local data = f:read("a")
 f:close()
 
-local parse = require "floxlist"
-local plist = parse(data)
+local plist = require "floxlist"(data)
 
 local detected = true
+local detectedamount = 0
+local checkamount = 0
+local textstack = ""
+local sectionheader_default = "We Drive Drunk!"
+local sectionheader = sectionheader_default
 
-local function check(text)
-	print(text)
-	detected = true
+-- Append is true by default
+local function check(text, append)
+	if textstack ~= "" then
+		textstack = textstack .. "\n"
+	end
+	textstack = textstack .. text
+	if append ~= false then
+		detectedamount = detectedamount + 1
+	end
 end
 
-local function section()
-	if detected then
-		detected = false
-		print()
+local function ck()
+	checkamount = checkamount + 1
+end
+
+local function section(text)
+	print(("%s (%i/%i)"):format(sectionheader, detectedamount, checkamount))
+	sectionheader = (text ~= "" and text ~= nil) and text or sectionheader_default
+	print(textstack)
+	if textstack ~= "" then
+		print ""
 	end
+	textstack = ""
+	detectedamount = 0
+	checkamount = 0
 end
 
 local bootarg = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"]
@@ -43,6 +62,7 @@ local kextsshow = {normal = {}, plugin = {}, disabled = {}}
 
 local function kitchensinked(...)
 	local tocheck = {...}
+	ck()
 	for k, v in pairs(tocheck) do
 		local match = table.concat(kextsalt, " "):match(v)
 		if not match then -- Allows rough match
@@ -54,6 +74,7 @@ local function kitchensinked(...)
 end
 local function kitchensinkedwithmsg(msg, ...) -- MONOSODIUM GLUTAMATE!!!
 	local tocheck = {...}
+	ck()
 	for k, v in pairs(tocheck) do
 		local match = table.concat(kextsalt, " "):match(v)
 		if not match then -- Allows rough match
@@ -97,14 +118,16 @@ for _, v in pairs(plist.Misc.Tools) do
 	table.insert(toolsalt, toolname)
 end
 
-section() -- Info, nothing too bad
+print()
+
+sectionheader = "Basic information" -- Info, nothing too bad
 
 local function show(name, tbl)
-	check(name..":")
-	for i = 1, #tbl, 2 do
-		check(tbl[i].." "..(tbl[i+1] or ""))
+	check(name..":", false)
+	for i = 1, #tbl, 4 do
+		check(tbl[i].." "..(tbl[i+1] or "").." "..(tbl[i+2] or "").." "..(tbl[i+3] or ""), false)
 	end
-	print ""
+	check("", false)
 end
 
 show("Kexts", kextsshow.normal)
@@ -117,34 +140,34 @@ show("Drivers", driversalt)
 
 show("Tools", toolsalt)
 
-for _, v in pairs(plist.Kernel.Patch) do
+ck()for _, v in pairs(plist.Kernel.Patch) do
 	if v.Comment:match("AuthenticAMD") then
 		check "This is an AMD machine"
 		break
 	end
 end
 
-if bootarg:match("nvme=-1") then
+ck()if bootarg:match("nvme=-1") then
 	check "NVME is disabled"
 end
 
-if bootarg:match("-[ri][ag][df]x?vesa") or bootarg:match("nv_disable=1") then -- Super awful, but this means igfx or rad
+ck()if bootarg:match("-[ri][ag][df]x?vesa") or bootarg:match("nv_disable=1") then -- Super awful, but this means igfx or rad
 	check "One or more VESA arg is enabled"
 end
 
-if drivers["OpenCanopy.efi"] then
+ck()if drivers["OpenCanopy.efi"] then
 	check "OpenCanopy is present (should be post-install stuff)"
 end
 
-check("SecureBootModel is "..plist.Misc.Security.SecureBootModel)
-check("SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName)
+check("SecureBootModel is "..plist.Misc.Security.SecureBootModel, false)
+check("SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName, false)
 
-section() -- Oddness/not advisable
+section("Mild oddities") -- Oddness/not advisable
 
 local badkexts = {"USBPorts", "UTBDefault", "USBInjectAll", "(IO80211[a-zA-Z0-9]+) "}
 
 local matches = {}
-for _, v in pairs(badkexts) do
+ck()for _, v in pairs(badkexts) do
 	local match = table.concat(kextsalt, " "):match(v)
 	if match then
 		table.insert(matches, match)
@@ -154,19 +177,19 @@ if matches[1] then
 	check("Detected "..table.concat(matches, ", "))
 end
 
-if #plist.Misc.Tools > 10 then
+ck()if #plist.Misc.Tools > 10 then
 	check "More than 10 tools detected"
 end
 
-if ssdts["SSDT-WIFI"] then
+ck()if ssdts["SSDT-WIFI"] then
 	check "SSDT-WIFI is present"
 end
 
-if plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["csr-active-config"] == "030A0000" then
-	check "SIP is disabled" -- Nobody would disable the entire SIP over filesystem and kext signing, and OpCore Simplify already uses weird value, so...
+ck()if plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["csr-active-config"] == "030A0000" then
+	check "SIP is disabled" -- Nobody would disable the entire SIP over filesystem and kext signing, and funny tool already uses weird value, so...
 end
 
-if bootarg:match("-v$") or bootarg:match("-v ") then
+ck()if bootarg:match("-v$") or bootarg:match("-v ") then
 	if not bootarg:match("keepsyms=1") then
 		check "Verbose is enabled, but keepsyms is absent"
 	end
@@ -175,25 +198,25 @@ if bootarg:match("-v$") or bootarg:match("-v ") then
 	end
 end
 
-if bootarg:match("-no_compat_check") then
+ck()if bootarg:match("-no_compat_check") then
 	check "SMBIOS compatibility check is disabled"
 end
 
-if drivers.OpenHfsPlus then
+ck()if drivers.OpenHfsPlus then
 	check "OpenHfsPlus is being used"
 end
 
-if tools.CleanNvram then
+ck()if tools.CleanNvram then
 	check "CleanNvram is being used"
 end
 
-section() -- Actual issues
+section("Issues") -- Actual issues
 
-if #plist.UEFI.Drivers > 40 then
+ck()if #plist.UEFI.Drivers > 40 then
 	check "More than 40 drivers detected"
 end
 
-if table.concat(driversalt):match("Hfs.+Hfs") then
+ck()if table.concat(driversalt):match("Hfs.+Hfs") then
 	check "More than 2 HFS+ drivers exists"
 end
 
@@ -213,7 +236,7 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 local trigger = false
-for k in pairs(kexts) do
+ck()for k in pairs(kexts) do -- I'll combine both as one check, as only one of them can trigger at a time.
 	if k == "USBMap" or k == "UTBMap" or k == "USBPorts" or k == "UTBDefault" or k == "USBInjectAll" then
 		if trigger then
 			check "Two or more USB map Kexts detected"
@@ -222,13 +245,9 @@ for k in pairs(kexts) do
 		trigger = true
 	end
 end
-if not trigger then
-	check "USB maps not found"
-end
-
 local hasutb = false
 local hastoolbox = false
-for k in pairs(kexts) do
+ck()for k in pairs(kexts) do
 	if k == "UTBMap" or k == "UTBDefault" then
 		hasutb = true
 	end
@@ -236,30 +255,35 @@ for k in pairs(kexts) do
 		hastoolbox = true
 	end
 end
+if not trigger and not hastoolbox then
+	check "USB maps not found"
+end
 if hasutb and not hastoolbox then
 	check "UTBMap or UTBDefault exists, but USBToolBox is not there"
+elseif hastoolbox and not trigger then
+	check "USBToolBox exists, but maps aren't found(including bad maps)"
 end
 
 local platforminfo = plist.PlatformInfo.Generic
-if platforminfo.SystemProductName == "iMac19,1" and platforminfo.SystemSerialNumber:sub(1, 4) == "W000" then
+ck()if platforminfo.SystemProductName == "iMac19,1" and platforminfo.SystemSerialNumber:sub(1, 4) == "W000" then
 	check "PlatformInfo is not set up"
 end
 
 local audiopath = plist.DeviceProperties.Add["PciRoot(0x0)/Pci(0x1b,0x0)"] or {}
-if audiopath["AAPL,ig-platform-id"] or audiopath["AAPL,snb-platform-id"] or audiopath["framebuffer-patch-enable"] then
+ck()if audiopath["AAPL,ig-platform-id"] or audiopath["AAPL,snb-platform-id"] or audiopath["framebuffer-patch-enable"] then
 	check "iGPU properties are injected to audio device"
 end
 
 local igpupath = plist.DeviceProperties.Add["PciRoot(0x0)/Pci(0x2,0x0)"] or {}
-if #igpupath > 15 then
+ck()if #igpupath > 15 then
 	check "iGPU properties are bloated"
 end
 
-if kexts.Lilu.Comment == "Patch engine" and kexts.Lilu.MinKernel == "8.0.0" then
+ck()if kexts.Lilu.Comment == "Patch engine" and kexts.Lilu.MinKernel == "8.0.0" then
 	check "OC Clean Snapshot or configurator equivalent is not done"
 end
 
-if ssdts["SSDT-EC"] then
+ck()if ssdts["SSDT-EC"] then
 	for k in pairs(ssdts) do
 		if k:sub(1,8) == "SSDT-EC-" then
 			check "SSDTTime SSDT-EC is present, but prebuilt SSDT-EC is also present" break
@@ -267,23 +291,23 @@ if ssdts["SSDT-EC"] then
 	end
 end
 
-if not (kexts.VirtualSMC and kexts.VirtualSMC.Enabled) then
+ck()if not (kexts.VirtualSMC and kexts.VirtualSMC.Enabled) then
 	check("VirtualSMC is "..(kexts.VirtualSMC and "disabled" or "absent"))
 end
 
-if ssdts.APIC and ssdts.DMAR and ssdts.SSDT1 and ssdts.SSDT then
+ck()if ssdts.APIC and ssdts.DMAR and ssdts.SSDT1 and ssdts.SSDT then
 	check "Machine's ACPI tables are being injected"
 end
 
-section() -- Prebuilt/autotool/configurator
+section("Autotool/prebuilt/configurator") -- Prebuilt/autotool/configurator
 
-for _, v in pairs(plist.Kernel.Add) do
+ck()for _, v in pairs(plist.Kernel.Add) do
 	if v.Arch == "x86_64" then
 		check "One or more Kext arch is set to x86_64" break
 	end
 end
 
-if string.match(data, "<data>[	 \n]+[a-zA-Z0-9=+/]+[ 	\n]+</data>") then
+ck()if string.match(data, "<data>[	 \n]+[a-zA-Z0-9=+/]+[ 	\n]+</data>") then
 	check "Detected <data> with newline/whitespaces before </data> (can be enabled with ProperTree's option)"
 end
 
@@ -294,32 +318,39 @@ end
 end]]
 
 -- I will nuke israel if they patched this
-if plist.Misc.Boot.PickerMode == "External" and plist.Misc.Boot.PickerVariant == "Auto" then
-	check "Failed specific autotool detection"
+ck()if plist.Misc.Boot.PickerMode == "External" and plist.Misc.Boot.PickerVariant == "Auto" then
+	check "Failed specific autotool detection (V2)"
 end
 
-if type(plist.UEFI.Drivers[1]) == "string" then
+ck()if type(plist.UEFI.Drivers[1]) == "string" then
 	check "OpenCore is outdated(old Drivers schema)"
 end
 
-for _, v in pairs(kexts) do
+ck()for _, v in pairs(kexts) do
 	if v.Comment:match("V[0-9.]+") then
 		check "One or more Kext comment has a version" break
 	end
 end
 
-for _, v in pairs(kexts) do
+ck()for _, v in pairs(kexts) do
 	if v.Comment == "" then
 		check "One or more Kext comment is empty" break
 	end
 end
 
-if ssdts["MaLd0n"] then
+ck()if ssdts["MaLd0n"] then
 	check "MaLd0n.aml is present"
 end
 
-if plist.ACPI.Quirks.RebaseRegions then -- https://www.insanelymac.com/forum/topic/352881-when-is-rebaseregions-necessary/#findComment-2790821
-	check "The user is a porno pro"     -- Don't need this quirk = Porno Amateur
-end 									-- Need this quirk = Porno Pro 
+if plist.ACPI.Quirks.RebaseRegions then         -- https://www.insanelymac.com/forum/topic/352881-when-is-rebaseregions-necessary/#findComment-2790821
+	check("The user is a porno pro", false)     -- Don't need this quirk = Porno Amateur
+end 									        -- Need this quirk = Porno Pro 
 
-print()
+if table.concat(driversalt, ""):match("AptioFix2Drv") then -- Joke detection, it doesn't count towards the total detection
+	check("AptioFix detected", false) -- What the fuck did you just fucking say about me, you little bitch? I'll have you know I graduated top of my class in the r/hackintosh Academy, and I've been involved in numerous secret raids on Tonymacx86, and I have over 300 confirmed roasts. I am trained in OsxAptioFix2Drv-free2000 warfare and I'm the top Hackintosher in the entire InsanelyMac armed forces. You are nothing to me but just another UniBeast user. I will wipe you the fuck out with precision the likes of which has never been seen before on this server, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of slavs across the former Soviet Union and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You're fucking dead, kid. I can be anywhere, anytime, and I can delete you in over seven hundred ways, and that's just with my Snow Leopard install. Not only am I extensively trained in unarmed macOS installs, but I have access to the entire arsenal of the Acidanthera repo and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clover isn’t that bad” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn't, you didn't, and now you're paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You're fucking dead, kiddo.
+end
+
+if detectedamount == checkamount then
+	check("PERFECT PREBUILT - Triggered every single preb checks", false)
+end
+section()
