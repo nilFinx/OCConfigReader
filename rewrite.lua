@@ -54,6 +54,15 @@ end
 
 local detections, order = table.unpack((require "detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
 
+local function load_plugin(name)
+	if pcall(function() require(name) end) then
+		require(name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
+	end
+end
+
+load_plugin "plugin"
+load_plugin "proppy"
+
 for _, k in pairs(order) do
 	local total, checked = 0, 0
 	local v = detections[k]
@@ -65,7 +74,7 @@ for _, k in pairs(order) do
 		prnt(name..":")
 		local ts = ""
 		local i = 0
-		for k, v in pairs(tbl) do
+		for _, v in pairs(tbl) do
 			i = i + 1
 			ts = ts..v.." "
 			if i >= 4 then
@@ -101,7 +110,7 @@ for _, k in pairs(order) do
 		text = text .. "\n"
 	end
 	for _, v in pairs(v) do
-		local msg, check = v(plist, data)
+		local msg, check = v()
 		if msg then
 			text = text .. msg .. "\n"
 			if check ~= false then
