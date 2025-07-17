@@ -2,12 +2,30 @@
 Reads through one's config.plist, and returns informations, oddities, etc
 
 # How to run
-You need newer version of Lua(5.1 is not accepted at moment, JIT also uses 5.1)
+You need newer version of Lua (Lua 5.1/JIT is not supported! Sorry!)
 ```lua main.lua /path/to/config.plist```
-If you are using most Unix based OSes(includes Linux and macOS), you can also use this
+If you are using most Unix based OSes(includes Linux and macOS, not Windows), you can also use this
 ```./main.lua /path/to/config.plist```
 
 # FAQ
+## What are these extra files?
+If alt-detection-methods.txt is being pushed - MAKE AN ISSUE IMMEDIATELY, please. This file is not meant to be seen in public.
+proppy.lua should be hidden too
+
+smbios-message-parser - It is a script to convert /r/Hackintosh Paradise's #smbios channel messages to a JSON file, for Min/Max macOS version info.
+
+xmlParser/floxlist - xmlParser is a library for parsing XML files by jonathanpoelen, and floxlist is a library that I made that parses a plist. It cannot read Date and UID?, but it's enough for OpenCore.
+
+All plist files are some kind of OpenCore config, for testing the tool. You can try it for yourself!
+
+.gitignore - For newbies, this file has a list of files that I want to keep it hidden from public eyes. You can add it for your own project, to make sure that your Discord token won't be public, for example! (Only if you store your token within a separate file - be warned.)
+
+main.lua - The actual code!
+
+detections.lua - A file containing all of the detection stuff.
+
+exampleplugin.lua - Example plugin
+
 ## Is this gatekeeping?
 Absolutely not. This tool is primarily for a community full of people who are willing to do their own stuff, instead of always relying on others. If you want your hands to be held, you could go to Olarila forms or other places - definitely not /r/Hackintosh Paradise, the Discord server.
 r/hackintosh, the subreddit appears to allow OpCore Simplify at the time of writing(although OpenCore Configurator was banned)
@@ -15,8 +33,7 @@ r/hackintosh, the subreddit appears to allow OpCore Simplify at the time of writ
 To be honest, hunting for these kind of tools and modifying the plist to avoid detection is way worse than what we do - We're just trying to help somebody who wants to learn, and tool creators are trying to force us to help somebody who just wants macOS without knowing how to maintain the install.
 
 ## Is LuaJIT supported?
-Unfortunately, no. This project requires a feature that only newer Lua supports.
+Unfortunately, no. This project requires a feature that only newer Lua supports. (please don't make an issue aobut this - I already know why, and I'm considering about supporting it in future.)
 
 ## An error occured while parsing
 Verify that none of the stuffs are dragged around(OCValidate can help with this), and make an issue.
-
