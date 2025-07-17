@@ -97,8 +97,6 @@ for _, k in pairs(order) do
 
 		show("Drivers", drivers)
 
-		show("Tools", tools)
-
 		prnt("DeviceProperties: ")
 		for k, v in pairs(plist.DeviceProperties.Add) do
 			prnt(k)
