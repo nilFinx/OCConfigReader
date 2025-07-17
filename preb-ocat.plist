@@ -1115,7 +1115,7 @@
 				<key>bluetoothInternalControllerInfo</key>
 				<data>AAAAAAAAAAAAAAAAAAA=</data>
 				<key>boot-args</key>
-				<string>nvme=-1 -v  watchdog=0 nv_disable=1  npci=0x3000 -wegnoigpu -ctrsmt -btlfxbeta -no_compat_check</string>
+				<string>nvme=-1 -v  watchdog=0 -amd_no_dgpu_accel  npci=0x3000 -wegnoigpu -ctrsmt -btlfxbeta -no_compat_check</string>
 				<key>csr-active-config</key>
 				<data>AwgAAA==</data>
 				<key>run-efi-updater</key>
