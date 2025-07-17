@@ -964,7 +964,7 @@
 			<key>PickerMode</key>
 			<string>External</string>
 			<key>PickerVariant</key>
-			<string>Auto</string>
+			<string>Acidanthera/Syrah</string>
 			<key>PollAppleHotKeys</key>
 			<true/>
 			<key>ShowPicker</key>
@@ -1115,7 +1115,7 @@
 				<key>bluetoothInternalControllerInfo</key>
 				<data>AAAAAAAAAAAAAAAAAAA=</data>
 				<key>boot-args</key>
-				<string>nvme=-1 -v  watchdog=0 nv_disable=1  npci=0x3000 -wegnoigpu -ctrsmt -btlfxbeta</string>
+				<string>nvme=-1 -v  watchdog=0 nv_disable=1  npci=0x3000 -wegnoigpu -ctrsmt -btlfxbeta -no_compat_check</string>
 				<key>csr-active-config</key>
 				<data>AwgAAA==</data>
 				<key>run-efi-updater</key>
