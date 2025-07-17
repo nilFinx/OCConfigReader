@@ -463,26 +463,6 @@
 				<string>Contents/Info.plist</string>
 			</dict>
 			<dict>
-				<key># why</key>
-				<string>Reddig guide, why disable and not delete???</string>
-				<key>Arch</key>
-				<string>Any</string>
-				<key>BundlePath</key>
-				<string>IntelBluetoothInjector.kext</string>
-				<key>Comment</key>
-				<string>IntelBluetoothInjector.kext</string>
-				<key>Enabled</key>
-				<false/>
-				<key>ExecutablePath</key>
-				<string></string>
-				<key>MaxKernel</key>
-				<string>69.0.0</string>
-				<key>MinKernel</key>
-				<string>19.0.0</string>
-				<key>PlistPath</key>
-				<string>Contents/Info.plist</string>
-			</dict>
-			<dict>
 				<key>Arch</key>
 				<string>Any</string>
 				<key>BundlePath</key>
