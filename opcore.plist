@@ -374,7 +374,7 @@
 			<key>ThirdPartyDrives</key>
 			<false/>
 			<key>XhciPortLimit</key>
-			<false/>
+			<true/>
 		</dict>
 		<key>Scheme</key>
 		<dict>
@@ -605,7 +605,7 @@
 			<key>SystemMemoryStatus</key>
 			<string>Auto</string>
 			<key>SystemProductName</key>
-			<string>iMac19,1</string>
+			<string>iMac14,4</string>
 			<key>SystemSerialNumber</key>
 			<string>C02YWDY2JV3Q</string>
 			<key>SystemUUID</key>
