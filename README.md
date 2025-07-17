@@ -32,6 +32,8 @@ r/hackintosh, the subreddit appears to allow OpCore Simplify at the time of writ
 
 To be honest, hunting for these kind of tools and modifying the plist to avoid detection is way worse than what we do - We're just trying to help somebody who wants to learn, and tool creators are trying to force us to help somebody who just wants macOS without knowing how to maintain the install.
 
+To summarize my thoughts, please head to r/hackintosh if you want to use auto tools, we just don't want to help absolutely clueless users, who are just looking to get macOS on their unsupported machines(Yes, the compatibility checker exists, but it's their choice to ignore it)
+
 ## Is LuaJIT supported?
 Unfortunately, no. This project requires a feature that only newer Lua supports. (please don't make an issue aobut this - I already know why, and I'm considering about supporting it in future.)
 
