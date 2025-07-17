@@ -4,6 +4,8 @@
 -- kextsarrar, driversarray is kexts and drivers, in array format to not make table.concat mad
 -- The tool assumes `proppy.lua` or `plugin.lua` is the plugin name by default
 
+-- note: NVRAM.Add["7C"] is equal to longer version of that
+
 local injection = function(detections, order, plist, raw, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
 	detections["Test!"] = {} -- Creates new category
 	table.insert(order, "Test!") -- append test to the last line
