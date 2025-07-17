@@ -161,6 +161,7 @@ prnt()
 
 check("SecureBootModel is "..plist.Misc.Security.SecureBootModel, false)
 check("SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName, false)
+check("bootarg is "..plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["boot-args"], false)
 
 ck()for _, v in pairs(plist.Kernel.Patch) do
 	if v.Comment:match("AuthenticAMD") then
@@ -183,6 +184,10 @@ end
 
 ck() if plist.Kernel.Quirks.AppleXcpmCfgLock or plist.Kernel.Quirks.AppleCpuPmCfgLock then
 	check "CFGLock is enabled"
+end
+
+ck() if plist.Kernel.Quirks.XhciPortLimit then
+	check "XhciPortLimit is enabled(Catalina or older?)"
 end
 
 section("Mild oddities") -- Oddness/not advisable
