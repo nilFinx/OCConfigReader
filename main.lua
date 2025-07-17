@@ -336,26 +336,11 @@ end
 
 section("Autotool/prebuilt/configurator") -- Prebuilt/autotool/configurator
 
-ck()for _, v in pairs(plist.Kernel.Add) do
-	if v.Arch == "x86_64" then
-		check "One or more Kext arch is set to x86_64" break
-	end
-end
-
-ck()if string.match(data, "<data>[	 \n]+[a-zA-Z0-9=+/]+[ 	\n]+</data>") then
-	check "Detected <data> with newline/whitespaces before </data> (can be enabled with ProperTree's option)"
-end
-
 -- Thanks CorpNewt! -- DEAD: Thanks shitlify dev!
 --[[if plist.Misc.Boot.Timeout == 10 and plist.Misc.Debug.Target == 0 and plist.Misc.Boot.PickerMode == "External" 
 	and plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"]["prev-lang:kbd"] == "en:252" then
 	check "Failed specific autotool detection"
 end]]
-
--- I will nuke israel if they patched this
-ck()if plist.Misc.Boot.PickerMode == "External" and plist.Misc.Boot.PickerVariant == "Auto" then
-	check "Failed specific autotool detection (V2)"
-end
 
 ck()if type(plist.UEFI.Drivers[1]) == "string" then
 	check "OpenCore is outdated(old Drivers schema)"
