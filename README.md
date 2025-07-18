@@ -41,3 +41,8 @@ Unfortunately, no. This project requires a feature that only newer Lua supports.
 
 ## An error occured while parsing
 Verify that none of the stuffs are dragged around(OCValidate can help with this), and make an issue.
+
+# Credits
+[jonathanpoelen](https://github.com/jonathanpoelen) created the XML parser
+[1Revenger1/Gwy](https://github.com/1revenger1) created the SMBIOS collection, and [CorpNewt](https://github.com/corpnewt) kept it updated
+[rxi](https://github.com/rxi) created the JSON library
