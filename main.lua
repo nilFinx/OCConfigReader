@@ -130,7 +130,7 @@ for _, k in pairs(order) do
 			total = total + 1
 		end
 	end
-	print(("%s (%i/%i)"):format(k or "We Drive Drunk!", checked, total))
+	print(total > 1 and ("%s (%i/%i)"):format(k or "We Drive Drunk!", checked, total) or (k or "We Drive Drunk!")..(total == 1 and ":" or "(\\)"))
 	print(text)
 	if total == checked and k == "Autotool/prebuilt/configurator" then
 		print "PERFECT PREBUILT - Triggered every single preb checks"
