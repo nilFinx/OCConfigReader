@@ -44,5 +44,5 @@ Verify that none of the stuffs are dragged around(OCValidate can help with this)
 
 # Credits
 [jonathanpoelen](https://github.com/jonathanpoelen) created the XML parser
-[1Revenger1/Gwy](https://github.com/1revenger1) created the SMBIOS collection, and [CorpNewt](https://github.com/corpnewt) kept it updated
+[1Revenger1](https://github.com/1revenger1) created the SMBIOS collection, and [CorpNewt](https://github.com/corpnewt) kept it updated
 [rxi](https://github.com/rxi) created the JSON library
