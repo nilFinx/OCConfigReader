@@ -19,7 +19,7 @@ if not f then
 	os.exit(1)
 end
 
-local out = "[\n"
+local out = "{\n"
 for v in data:gmatch("[^\n]+") do
 	if v:sub(1, 1) ~= "-" and v:sub(1, 1) ~= " " then
 		local t = {}
@@ -27,10 +27,10 @@ for v in data:gmatch("[^\n]+") do
 			table.insert(t, w:match("^%s*(.-)%s*$")) -- Exclude spaces
 		end
 		local year = t[4]:match("[S, ]*([0-9]+)/?[0-9]*$") -- Year, just year. Year please.
-		out = out .. ('	["%s", "%s", "%s", "%s", "%s", "%s"],\n'):format(t[1], t[2], t[3], year, t[5]:match("[0-9]+[.][0-9x.]+"), t[5]:match("[.0-9x]+$"))
+		out = out .. ('	"%s" : ["%s", "%s", "%s", "%s", "%s"],\n'):format(t[1], t[2], t[3], year, t[5]:match("[0-9]+[.][0-9x.]+"), t[5]:match("[.0-9x]+$"))
 	end
 end
-out = out:sub(1, out:len()-2).."\n]"
+out = out:sub(1, out:len()-2).."\n}"
 
 f:write(out)
 f:close()
