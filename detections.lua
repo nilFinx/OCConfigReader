@@ -355,7 +355,7 @@ kitchensinked("BrcmPatchRAM2", "BrcmPatchRAM3") -- Having those two already tell
 kitchensinked("WhateverGreen", "Noot[ed]*R[Xed]+") -- Hacky, but it detects both
 kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM[1-3]?") -- If BrcmPatchRAM4 comes out, we will be doomed.
 kitchensinked("BlueToolFixup", "[a-zA-Z]+BluetoothInjector") -- Show the full name
-kitchensinked("AirportItlwm", "[^ ](Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
+kitchensinked("AirportItlwm", " (Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
 kitchensinked("USBMap", "UTBMap")
 kitchensinked("UTBMap", "UTBDefault")
 
