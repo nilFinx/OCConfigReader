@@ -100,11 +100,20 @@ for _, k in pairs(order) do
 		show("Drivers", drivers)
 
 		prnt("DeviceProperties: ")
+		local maxlen = 0
+		for _, v in pairs(plist.DeviceProperties.Add) do
+			for k in pairs(v) do
+				if k:len() > maxlen then
+					maxlen = k:len()
+				end
+			end
+		end
+		local space = "                                                                                  "
 		for k, v in pairs(plist.DeviceProperties.Add) do
 			prnt(k)
 			for l, w in pairs(v) do
 				local symbol = " |"
-				prnt(symbol..l..": "..tostring(w))
+				prnt(symbol..l..space:sub(l:len(), maxlen).."| "..tostring(w))
 			end
 		end
 		text = text .. "\n"
