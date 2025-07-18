@@ -14,17 +14,57 @@ local function _kitchensinked(tocheck)
 	return table.concat(checked, ", ").." are all present"
 end
 
+local function _osxname(v)
+	if v >= 10.12 then
+		return "macOS "..tostring(v)
+	elseif v >= 10.8 then
+		return "OS X "..tostring(v)
+	else
+		return "Mac OS X "..tostring(v)
+	end
+end
+
 local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
+local json = require "json"
+local f = io.open("smbios.json")
+if not f then
+	print "smbios.json is not found!"
+	os.exit(1) -- Maybe fix the crash?
+end
+local sbdata = f:read("a")
+f:close()
+local sblist = json.decode(sbdata)
+local minver = 10.4 -- 10.3 intel port :fire:
+local maxver = 26 -- 27 wen eta??
 
-local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
+local function _maxset(v)
+	if v <= maxver then
+		maxver = v
+	end
+end
+
+local function _minset(v)
+	if v >= minver then
+		minver = v
+	end
+end
+
+local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator", "Assumed version"}
 local d = {
 	Info = {
 		function() -- Tiny bit messy, but it *works*
-			return "SecureBootModel is "..plist.Misc.Security.SecureBootModel.."\n"..
+			local smbios = plist.PlatformInfo.Generic.SystemProductName
+			local sbdata = sblist[smbios]
+			---@diagnostic disable-next-line: cast-local-type
+			minver = tonumber(sbdata[4]:match("[0-9]+[.][0-9]+") or sbdata[4]:match("[0-9]+"))
+			---@diagnostic disable-next-line: cast-local-type
+			maxver = tonumber(sbdata[5]:match("[0-9]+[.][0-9]+") or sbdata[5]:match("[0-9]+"))
+			return ("SMBIOS is %s, %s to %s (%s)"):format(smbios, sbdata[4], sbdata[5], sbdata[1]).."\n"..
 				"bootarg is "..bootarg.."\n"..
-				"SMBIOS is "..plist.PlatformInfo.Generic.SystemProductName, false
+				"SecureBootModel is "..plist.Misc.Security.SecureBootModel,
+				false
 		end,	
 		function()
 			for _, v in pairs(plist.Kernel.Patch) do
@@ -55,6 +95,7 @@ local d = {
 		end,
 		function()
 			if plist.Kernel.Quirks.XhciPortLimit then
+				_maxset(10.15)
 				return "XhciPortLimit is enabled(Catalina or older?)"
 			end
 		end
@@ -249,6 +290,53 @@ local d = {
 			end
 			return false
 		end
+	},
+	["Assumed version"] = {
+		function() -- Assumption fever!!!
+			if kexts["BrcmPatchRAM3"] then
+				_minset(10.15)
+			elseif kexts["BrcmPatchRAM2"] then
+				_minset(10.11)
+				_maxset(10.14)
+			elseif kexts["BrcmPatchRAM"] then
+				_maxset(10.10)
+			end
+
+			if kexts["BlueToolFixup"] then
+				_minset(12)
+			elseif table.concat(kextsarray, " "):find("BluetoothInjector") then
+				_maxset(11)
+			end
+
+			if kexts["SMCAMDProcessor"] then
+				_minset(10.13)
+			end
+
+			if kexts["SMCRadeonSensors"] then
+				_minset(10.14)
+			end
+
+			if kexts["AppleIGB"] then
+				_minset(12)
+			end
+
+			if bootarg:find("e1000=0") then
+				_minset(12)
+			elseif bootarg:find("dk[.]e1000=0") then
+				_maxset(11)
+			end
+		
+			return false -- No counting
+		end,
+		function()
+			if minver > maxver then
+				return "Failed to assume(Overlap?)"
+			elseif minver == maxver then
+				return "Running ".._osxname(minver)
+			else
+				return ("Running %s to %s"):format(_osxname(minver), _osxname(maxver))
+			end
+		end
 	}
 }
 
@@ -256,30 +344,26 @@ local function kitchensinked(...)
 	local stuff = {...}
 	table.insert(d["Kitchen sinked"], function() return _kitchensinked(stuff) end)
 end
+local function kitchensinkedwithmsg(msg, ...)
+	local stuff = {...}
+	table.insert(d["Kitchen sinked"], function() return _kitchensinked(stuff) and msg or nil end)
+end
 
 kitchensinked("IntelMausi", "IntelSnowMausi")
 kitchensinked("AppleALC", "AppleALCU")
 kitchensinked("BrcmPatchRAM2", "BrcmPatchRAM3") -- Having those two already tells it well
-kitchensinked("WhateverGreen", "Noot[ed]*R[Xed]*") -- Hacky, but it detects both
+kitchensinked("WhateverGreen", "Noot[ed]*R[Xed]+") -- Hacky, but it detects both
 kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM[1-3]?") -- If BrcmPatchRAM4 comes out, we will be doomed.
 kitchensinked("BlueToolFixup", "[a-zA-Z]+BluetoothInjector") -- Show the full name
-kitchensinked("AirportItlwm", " (Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
+kitchensinked("AirportItlwm", "[^ ](Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
 kitchensinked("USBMap", "UTBMap")
 kitchensinked("UTBMap", "UTBDefault")
 
---[[
-
-
-
----@diagnostic disable-next-line: deprecated
 kitchensinkedwithmsg("All VirtualSMC plugins are there (but it can be normal)",
 	"SMCProcessor", "SMCSuperIO", "SMCLightSensor", "SMCDellSensor", "SMCBatteryManager")
 kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
-
-
-]]
 
 return {d, order} -- Workaround to being only able to pass 1 arguments
 end
