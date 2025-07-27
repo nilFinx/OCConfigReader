@@ -42,6 +42,13 @@ Unfortunately, no. This project requires a feature that only newer Lua supports.
 ## An error occured while parsing
 Verify that none of the stuffs are dragged around(OCValidate can help with this), and make an issue.
 
+## I get (n) total detections, but the detection count is lower?
+Intentional! Some checks are hidden, because it is meant to be a joke check.
+
+## Can I make a feature/detection request?
+Yes! If I don't consider it to be too useful, I will ask you to make it a plugin instead of making a PR here though.
+Also, autotool detection request is completely banned right now. Do not make a PR about it!
+
 # Credits
 [jonathanpoelen](https://github.com/jonathanpoelen) created the XML parser
 
