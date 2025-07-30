@@ -57,13 +57,17 @@ end
 local detections, order = table.unpack((require "detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
 
 local function load_plugin(name)
-	if pcall(function() require(name) end) then
-		require(name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
+	local _, f = pcall(require, name)
+	if type(f) == "function" then
+		f(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
 	end
 end
 
-load_plugin "plugin"
-load_plugin "proppy"
+load_plugin "acpi_patch" -- Show ACPI patches
+
+load_plugin "proppy" -- Proprietary checks
+
+load_plugin "plugin" -- Default plugin name
 
 ---@diagnostic disable-next-line: param-type-mismatch
 for _, k in pairs(order) do
