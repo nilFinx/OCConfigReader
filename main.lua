@@ -1,11 +1,11 @@
 #!/usr/bin/env lua
+package.path = package.path .. ";" .. debug.getinfo(1).source:match("@?(.*[\\/])").."?.lua"
 require "occr.occrstd"
 
 asrt(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
 asrt(arg[1], "OCConfigReader [smbios <SMBIOS>] <path/to/config.plist>")
 
 local mode = ""
-
 
 if arg[1] == "smbios" then
 	asrt(arg[2], "No SMBIOS provided")
@@ -20,7 +20,7 @@ f:close()
 local plist = require "occr.floxlist"(data)
 
 local json = require "occr.json"
-local f = io.open("smbios.json")
+local f = io.open(debug.getinfo(1).source:match("@?(.*[\\/])").."smbios.json")
 asrt(f, "smbios.json is not found!") -- can be fixed?
 sblist = json.decode(f:read("a"))
 f:close()
@@ -61,6 +61,8 @@ for _, v in pairs(plist.Misc.Tools) do
 end
 
 local detections, order = table.unpack((require "occr.detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
+
+require "occr.acpi_patch"(detections, order, plist)
 
 local function load_plugin(name)
 	pcall(function()require("user."..name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)end)
