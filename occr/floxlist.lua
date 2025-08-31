@@ -7,15 +7,15 @@ local types
 
 local function parse(plist)
 
-	assert(plist:match("<plist version=\"[.0-9]+\">.+</plist>"), "Not a plist")
+	assert(plist:match("<plist version=\"[.0-9]+\">.+</plist>"), "Failed to parse: Not a plist")
 	local suc, plist = pcall(function(plist)
+	---@diagnostic disable-next-line: return-type-mismatch
 		local suc, plist = pcall(function(plist) return xmlparser.parse(plist) end, plist)
-		---@diagnostic disable-next-line: need-check-nil
 		if not suc then
 			error("Failed to parse: xmlparser issue")
 		end
 
-		plist = plist.children[1].children[1].children
+		plist = plist.children[1].children[1].children or error "Failed to parse: Not a plist, or XML parsing issue?"
 
 		local function parseDict(data, array)
 			local dict = {}
@@ -36,7 +36,7 @@ local function parse(plist)
 				elseif vtype == "array" then
 					value = parseDict(value, true)
 				elseif types[vtype] then
-					value = types[vtype](value)
+					value = value[1] and types[vtype](value) or "" -- This also catches if the return value was nil!
 				else
 					value = "Unknown type"
 				end
@@ -53,15 +53,9 @@ local function parse(plist)
 
 		types = {
 			string = function(data)
-				if not data[1] then
-					return ""
-				end
 				return data[1].text or ""
 			end,
-			data = function(data) -- Decode base64 to hex
-				if not data[1] then
-					return ""
-				end
+			data = function(data)
 				local data = data[1].text
 				local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 				local t = {}
@@ -90,6 +84,7 @@ local function parse(plist)
 			end
 		}
 		
+		---@diagnostic disable-next-line: return-type-mismatch
 		return parseDict(plist)
 	end, plist)
 	if not suc then

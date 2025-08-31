@@ -66,9 +66,13 @@ local function load_plugin(name)
 	pcall(function()require("user."..name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)end)
 end
 
-load_plugin "plugin"
-load_plugin "proppy"
+load_plugin "acpi_patch" -- Show ACPI patches
 
+load_plugin "proppy" -- Proprietary checks
+
+load_plugin "plugin" -- Default plugin name
+
+---@diagnostic disable-next-line: param-type-mismatch
 for _, k in pairs(order) do
 	local total, checked = 0, 0
 	local v = detections[k]
@@ -123,17 +127,21 @@ for _, k in pairs(order) do
 		text = text .. "\n"
 	end
 	for _, v in pairs(v) do
-		local msg, check = v()
-		if msg then
-			text = text .. msg .. "\n"
-			if check ~= false then
-				checked = checked + 1
+		local suc, msg, check = pcall(v)
+		if suc then
+			if msg then
+				text = text .. msg .. "\n"
+				if check ~= false then
+					checked = checked + 1
+				end
 			end
-		end
-		if check ~= false and msg ~= false then
-			total = total + 1
+			if check ~= false and msg ~= false then
+				total = total + 1
+			end
+		else
+			print("\27[31mA check failed(please report!): " .. msg .. "\27[00m")
 		end
 	end
-	print(total > 1 and ("%s (%i/%i)"):format(k or "We Drive Drunk!", checked, total) or (k or "We Drive Drunk!")..(total == 1 and ":" or "(\\)"))
+	print(("%s"..((total > 1) and " (%i/%i):" or ":")):format(k, checked, total))
 	print(text)
 end
