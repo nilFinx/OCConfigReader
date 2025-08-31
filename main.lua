@@ -1,23 +1,29 @@
 #!/usr/bin/env lua
-if _VERSION == "Lua 5.1" then
-	print "LuaJIT/5.1 is unsupported"
-	os.exit(1)
-end
+require "occr.occrstd"
 
-if not arg[1] then
-	print "OCConfigReader <path/to/config.plist>"
-	os.exit(1)
+asrt(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
+asrt(arg[1], "OCConfigReader [smbios <SMBIOS>] <path/to/config.plist>")
+
+local mode = ""
+
+
+if arg[1] == "smbios" then
+	asrt(arg[2], "No SMBIOS provided")
+	mode = "smbios"
 end
 
 local f = io.open(arg[1])
-if not f then
-	print "Failed to open file (Wrong path?)"
-	os.exit(1)
-end
+asrt(f, "Failed to open file (Wrong path?)")
 local data = f:read("a")
 f:close()
 
-local plist = require "floxlist"(data)
+local plist = require "occr.floxlist"(data)
+
+local json = require "occr.json"
+local f = io.open("smbios.json")
+asrt(f, "smbios.json is not found!") -- can be fixed?
+sblist = json.decode(f:read("a"))
+f:close()
 
 plist.NVRAM.Add["7C"] = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"] -- 7C exists now
 
@@ -54,12 +60,10 @@ for _, v in pairs(plist.Misc.Tools) do
 	tools[toolname] = toolname
 end
 
-local detections, order = table.unpack((require "detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
+local detections, order = table.unpack((require "occr.detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
 
 local function load_plugin(name)
-	if pcall(function() require(name) end) then
-		require(name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
-	end
+	pcall(function()require("user."..name)(detections, order, plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)end)
 end
 
 load_plugin "plugin"
@@ -132,7 +136,4 @@ for _, k in pairs(order) do
 	end
 	print(total > 1 and ("%s (%i/%i)"):format(k or "We Drive Drunk!", checked, total) or (k or "We Drive Drunk!")..(total == 1 and ":" or "(\\)"))
 	print(text)
-	if total == checked and k == "Autotool/prebuilt/configurator" then
-		print "PERFECT PREBUILT - Triggered every single preb checks"
-	end
 end
