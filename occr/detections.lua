@@ -14,28 +14,11 @@ local function _kitchensinked(tocheck)
 	return table.concat(checked, ", ").." are all present"
 end
 
-local function _osxname(v)
-	if v >= 10.12 then
-		return "macOS "..tostring(v)
-	elseif v >= 10.8 then
-		return "OS X "..tostring(v)
-	else
-		return "Mac OS X "..tostring(v)
-	end
-end
+
 
 local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
-local json = require "json"
-local f = io.open("smbios.json")
-if not f then
-	print "smbios.json is not found!"
-	os.exit(1) -- Maybe fix the crash?
-end
-local sbdata = f:read("a")
-f:close()
-local sblist = json.decode(sbdata)
 local minver = 10.4 -- 10.3 intel port :fire:
 local maxver = 26 -- 27 wen eta??
 
@@ -193,8 +176,10 @@ local d = {
 			end
 		end,
 		function()
-			if table.concat(driversarray):match("Hfs.+Hfs") then
+			if table.concat(driversarray):find("Hfs.+Hfs") then
 				return "More than 2 HFS+ drivers exists"
+			elseif not table.concat(driversarray):find("Hfs") then
+				return "HFS+ driver is missing"
 			end
 		end,
 		function()
@@ -332,9 +317,9 @@ local d = {
 			if minver > maxver then
 				return "Failed to assume(Overlap?)"
 			elseif minver == maxver then
-				return "Running ".._osxname(minver)
+				return "Running "..osxname(minver)
 			else
-				return ("Running %s to %s"):format(_osxname(minver), _osxname(maxver))
+				return ("Running %s to %s"):format(osxname(minver), osxname(maxver))
 			end
 		end
 	}
