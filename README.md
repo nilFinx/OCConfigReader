@@ -56,7 +56,7 @@ Also, autotool detection request is completely banned right now. Do not make a P
 
 [jonathanpoelen](https://github.com/jonathanpoelen) created the XML parser
 
-[1Revenger1](https://github.com/1revenger1) created the SMBIOS collection, and [CorpNewt](https://github.com/corpnewt) kept it updated
+Somebody for creating the SMBIOS collection in /r/Hackintosh Paradise, [averycblack](https://github.com/averycblack) updated it and and [CorpNewt](https://github.com/corpnewt) pushed it to the channel
 
 [rxi](https://github.com/rxi) created the JSON library
 
