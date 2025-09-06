@@ -1,5 +1,7 @@
 #!/usr/bin/env lua
-package.path = package.path .. ";" .. debug.getinfo(1).source:match("@?(.*[\\/])").."?.lua"
+
+local path = debug.getinfo(1).source:match("@?(.*[\\/])")
+if path then package.path = package.path .. ";" .. path .. "?.lua" end
 require "occr.occrstd"
 
 asrt(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
