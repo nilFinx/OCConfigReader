@@ -4,7 +4,12 @@ Reads through one's config.plist, and returns informations, oddities, etc
 
 ## How to run
 
-Follow [how-2-run.md](https://github.com/nilFinx/OCConfigReader/blob/main/docs/how-2-run.md)! On Unix(macOS, Linux), you need to clone the repo, get Lua 5.4(5.3 might be fine), and `lua main.lua /path/to/file.plist`
+Windows instructions:
+1. Grab [OCConfigReader.exe](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/OCConfigReader.exe)
+2. Grab [preb-ocat.plist](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/preb-ocat.plist)
+3. Run `OCConfigReader.exe /path/to/preb-ocat.plist`
+
+On Unix(macOS, Linux), you need to clone the repo, get Lua 5.4(5.3 might be fine), and `lua main.lua /path/to/file.plist`
 
 ## FAQ
 
