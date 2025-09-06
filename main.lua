@@ -1,5 +1,11 @@
 #!/usr/bin/env lua
-package.path = package.path .. ";" .. debug.getinfo(1).source:match("@?(.*[\\/])").."?.lua"
+local path = debug.getinfo(1).source:match("@?(.*[\\/])")
+if path then 
+	package.path = package.path .. ";" .. path .. "?.lua"
+	path = path .. "/"
+else
+	path = ""
+end
 require "occr.occrstd"
 
 asrt(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
@@ -20,7 +26,7 @@ f:close()
 local plist = require "occr.floxlist"(data)
 
 local json = require "occr.json"
-local f = io.open(debug.getinfo(1).source:match("@?(.*[\\/])").."smbios.json")
+local f = io.open(path.."smbios.json")
 asrt(f, "smbios.json is not found!") -- can be fixed?
 sblist = json.decode(f:read("a"))
 f:close()
