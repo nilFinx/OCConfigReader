@@ -4,10 +4,7 @@ Reads through one's config.plist, and returns informations, oddities, etc
 
 ## How to run
 
-You need newer version of Lua (Lua 5.1/JIT is not supported! Sorry!)
-```lua main.lua /path/to/config.plist```
-If you are using most Unix based OSes(includes Linux and macOS, not Windows), you can also use this
-```./main.lua /path/to/config.plist```
+Follow [how-2-run.md](https://github.com/nilFinx/OCConfigReader/blob/main/docs/how-2-run.md)! On Unix(macOS, Linux), you need to clone the repo, get Lua 5.4(5.3 might be fine), and `lua main.lua /path/to/file.plist`
 
 ## FAQ
 
