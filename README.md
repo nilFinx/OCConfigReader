@@ -4,10 +4,12 @@ Reads through one's config.plist, and returns informations, oddities, etc
 
 ## How to run
 
-You need newer version of Lua (Lua 5.1/JIT is not supported! Sorry!)
-```lua main.lua /path/to/config.plist```
-If you are using most Unix based OSes(includes Linux and macOS, not Windows), you can also use this
-```./main.lua /path/to/config.plist```
+Windows instructions:
+1. Grab [OCConfigReader.exe](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/OCConfigReader.exe)
+2. Grab [preb-ocat.plist](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/preb-ocat.plist)
+3. Run `OCConfigReader.exe /path/to/preb-ocat.plist`
+
+On Unix(macOS, Linux), you need to clone the repo, get Lua 5.4(5.3 might be fine), and `lua main.lua /path/to/file.plist`
 
 ## FAQ
 
@@ -56,7 +58,7 @@ Also, autotool detection request is completely banned right now. Do not make a P
 
 [jonathanpoelen](https://github.com/jonathanpoelen) created the XML parser
 
-[1Revenger1](https://github.com/1revenger1) created the SMBIOS collection, and [CorpNewt](https://github.com/corpnewt) kept it updated
+Somebody for creating the SMBIOS collection in /r/Hackintosh Paradise, [averycblack](https://github.com/averycblack) updated it and and [CorpNewt](https://github.com/corpnewt) pushed it to the channel
 
 [rxi](https://github.com/rxi) created the JSON library
 
