@@ -4,13 +4,11 @@ Reads through one's config.plist, and returns informations, oddities, etc
 
 ## How to run
 
-Windows instructions:
+1. Clone the repo
+2. Get Lua 5.4(5.3/5.2 might be fine)
+3. `lua main.lua /path/to/file.plist`
 
-1. Grab [OCConfigReader.exe](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/OCConfigReader.exe)
-2. Grab [preb-ocat.plist](https://github.com/nilFinx/OCConfigReader/releases/download/She-wanna-hop-in-a-'Rari/preb-ocat.plist)
-3. Run `OCConfigReader.exe /path/to/preb-ocat.plist`
-
-On Unix(macOS, Linux), you need to clone the repo, get Lua 5.4(5.3 might be fine), and `lua main.lua /path/to/file.plist`
+If you don't know what these words mean, read the FAQ. This tool is not for you.
 
 ## FAQ
 
