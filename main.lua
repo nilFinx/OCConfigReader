@@ -6,30 +6,31 @@ if path then
 else
 	path = ""
 end
+
 require "occr.occrstd"
 
-asrt(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
-asrt(arg[1], "OCConfigReader [smbios <SMBIOS>] <path/to/config.plist>")
+assert(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
+assert(arg[1], "OCConfigReader [smbios <SMBIOS>] <path/to/config.plist>")
 
-local mode = ""
+json = require "occr.json"
+local f = io.open(path.."occr/smbios.json")
+assert(f, "smbios.json is not found!") -- can be fixed?
+sblist = json.decode(f:read("a"))
+f:close()
 
 if arg[1] == "smbios" then
-	asrt(arg[2], "No SMBIOS provided")
-	mode = "smbios"
+	assert(arg[2], "No SMBIOS provided")
+	os.exit(0)
 end
 
 local f = io.open(arg[1])
-asrt(f, "Failed to open file (Wrong path?)")
+assert(f, "Failed to open file (Wrong path?)")
 local data = f:read("a")
 f:close()
 
-local plist = require "occr.floxlist"(data)
+errormsges = ""
 
-local json = require "occr.json"
-local f = io.open(path.."smbios.json")
-asrt(f, "smbios.json is not found!") -- can be fixed?
-sblist = json.decode(f:read("a"))
-f:close()
+local plist = require "occr.floxlist"(data)
 
 plist.NVRAM.Add["7C"] = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"] -- 7C exists now
 
@@ -147,9 +148,14 @@ for _, k in pairs(order) do
 				total = total + 1
 			end
 		else
-			print("\27[31mA check failed(please report!): " .. msg .. "\27[00m")
+			spit("check failed(please report!): " .. msg)
 		end
 	end
 	print(("%s"..((total > 1) and " (%i/%i):" or ":")):format(k, checked, total))
 	print(text)
+end
+
+if errormsges ~= "" then
+	print "\27[31mAWarnings:"
+	print(errormsges:sub(1, -1))
 end
