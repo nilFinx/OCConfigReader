@@ -67,8 +67,7 @@ for _, v in pairs(plist.Misc.Tools) do
 	tools[toolname] = toolname
 end
 
-local detections, order = table.unpack((require "occr.detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)))
-
+local detections, order = require "occr.detections"(plist, data, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
 require "occr.acpi_patch"(detections, order, plist)
 
 local function load_plugin(name)
@@ -135,24 +134,26 @@ for _, k in pairs(order) do
 		end
 		text = text .. "\n"
 	end
-	for _, v in pairs(v) do
-		local suc, msg, check = pcall(v)
-		if suc then
-			if msg then
-				text = text .. msg .. "\n"
-				if check ~= false then
-					checked = checked + 1
+	if type(v) == "table" then -- Skip when empty
+		for _, v in pairs(v) do
+			local suc, msg, check = pcall(v)
+			if suc then
+				if msg then
+					text = text .. msg .. "\n"
+					if check ~= false then
+						checked = checked + 1
+					end
 				end
+				if check ~= false and msg ~= false then
+					total = total + 1
+				end
+			else
+				spit("check failed(please report!): " .. msg)
 			end
-			if check ~= false and msg ~= false then
-				total = total + 1
-			end
-		else
-			spit("check failed(please report!): " .. msg)
 		end
+		print(("%s"..((total > 1) and " (%i/%i):" or ":")):format(k, checked, total))
+		print(text)
 	end
-	print(("%s"..((total > 1) and " (%i/%i):" or ":")):format(k, checked, total))
-	print(text)
 end
 
 if errormsges ~= "" then
