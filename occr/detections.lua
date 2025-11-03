@@ -20,7 +20,7 @@ local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
 
-local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator", "Assumed version"}
+local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
 local d = {
 	Info = {
 		function() -- Tiny bit messy, but it *works*
