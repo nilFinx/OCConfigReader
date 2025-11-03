@@ -227,6 +227,20 @@ local d = {
 			elseif hastoolbox and not trigger then
 				return "USBToolBox exists, but maps aren't found(including bad maps)"
 			end
+		end,
+		function()
+			local a, b, c = plist.Booter.Quirks.EnableWriteUnprotector,
+				plist.Booter.Quirks.RebuildAppleMemoryMap,
+				plist.Booter.Quirks.SyncRuntimePermissions
+			if a and b and c then -- I covered all combos right
+				return "All 3 MATs related Booter quirks are enabled"
+			end
+			if not (a or b or c) then
+				return "All 3 MATs related Booter quirks are disabled"
+			end
+			if not ((b and c and not a) or (a and not (b or c))) then
+				return "Invalid MATs related Booter quirks combination"
+			end
 		end
 	},
 	["Kitchen sinked"] = {}, -- reserved
