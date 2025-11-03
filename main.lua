@@ -179,6 +179,6 @@ for _, k in pairs(order) do
 end
 
 if errormsges ~= "" then
-	print "\27[31mAWarnings:"
+	print "\27[31mWarning:"
 	print(errormsges:sub(1, -1))
 end
