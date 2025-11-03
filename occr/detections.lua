@@ -19,20 +19,6 @@ end
 local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
-local minver = 10.4 -- 10.3 intel port :fire:
-local maxver = 26 -- 27 wen eta??
-
-local function _maxset(v)
-	if v <= maxver then
-		maxver = v
-	end
-end
-
-local function _minset(v)
-	if v >= minver then
-		minver = v
-	end
-end
 
 local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator", "Assumed version"}
 local d = {
@@ -78,7 +64,6 @@ local d = {
 		end,
 		function()
 			if plist.Kernel.Quirks.XhciPortLimit then
-				_maxset(10.15)
 				return "XhciPortLimit is enabled(Catalina or older?)"
 			end
 		end
@@ -290,53 +275,6 @@ local d = {
 			return false
 		end
 	},
-	["Assumed version"] = {
-		function() -- Assumption fever!!!
-			if kexts["BrcmPatchRAM3"] then
-				_minset(10.15)
-			elseif kexts["BrcmPatchRAM2"] then
-				_minset(10.11)
-				_maxset(10.14)
-			elseif kexts["BrcmPatchRAM"] then
-				_maxset(10.10)
-			end
-
-			if kexts["BlueToolFixup"] then
-				_minset(12)
-			elseif table.concat(kextsarray, " "):find("BluetoothInjector") then
-				_maxset(11)
-			end
-
-			if kexts["SMCAMDProcessor"] then
-				_minset(10.13)
-			end
-
-			if kexts["SMCRadeonSensors"] then
-				_minset(10.14)
-			end
-
-			if kexts["AppleIGB"] then
-				_minset(12)
-			end
-
-			if bootarg:find("e1000=0") then
-				_minset(12)
-			elseif bootarg:find("dk[.]e1000=0") then
-				_maxset(11)
-			end
-		
-			return false -- No counting
-		end,
-		function()
-			if minver > maxver then
-				return "Failed to assume(Overlap?)"
-			elseif minver == maxver then
-				return "Running "..osxname(minver)
-			else
-				return ("Running %s to %s"):format(osxname(minver), osxname(maxver))
-			end
-		end
-	}
 }
 
 local function kitchensinked(...)
@@ -351,7 +289,7 @@ end
 kitchensinked("IntelMausi", "IntelSnowMausi")
 kitchensinked("AppleALC", "AppleALCU")
 kitchensinked("BrcmPatchRAM2", "BrcmPatchRAM3") -- Having those two already tells it well
-kitchensinked("WhateverGreen", "Noot[ed]*R[Xed]+") -- Hacky, but it detects both
+kitchensinked("WhateverGreen", "Noot[ed]*R[Xe]d?") -- Hacky, but it detects both
 kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM[1-3]?") -- If BrcmPatchRAM4 comes out, we will be doomed.
 kitchensinked("BlueToolFixup", "[a-zA-Z]+BluetoothInjector") -- Show the full name
 kitchensinked("AirportItlwm", " (Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
@@ -364,6 +302,6 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 
-return {d, order} -- Workaround to being only able to pass 1 arguments
+return d, order -- Workaround to being only able to pass 1 arguments
 end
 return runme
