@@ -8,7 +8,7 @@ local types
 local function parse(plist)
 
 	assert(plist:match("<plist version=\"[.0-9]+\">.+</plist>"), "Failed to parse: Not a plist")
-	local suc, plist = pcall(function(plist)
+	local suc, plist = xpcall(function(plist)
 	---@diagnostic disable-next-line: return-type-mismatch
 		local suc, plist = pcall(function(plist) return xmlparser.parse(plist) end, plist)
 		if not suc then
@@ -34,13 +34,22 @@ local function parse(plist)
 					value = vtype == "true" and true or false
 					vtype = "boolean"
 				elseif vtype == "array" then
-					value = parseDict(value, true)
+					if next(value) then
+						value = parseDict(value, true)
+					else
+						value = {}
+					end
+				elseif vtype == "dict" then
+					if next(value) then
+						value = parseDict(value)
+					else
+						value = {}
+					end
 				elseif types[vtype] then
-					value = value[1] and types[vtype](value) or "" -- This also catches if the return value was nil!
+					value = value[1] and types[vtype](value) or nil
 				else
-					value = "Unknown type"
+					value = "Unknown type: "..tostring(vtype)
 				end
-
 				if array then
 					table.insert(dict, value)
 				else
@@ -78,21 +87,18 @@ local function parse(plist)
 				end
 				return string.upper(table.concat(decoded))
 			end,
-			dict = parseDict,
 			integer = function(data)
 				return tonumber(data[1].text)
 			end
 		}
 		
-		---@diagnostic disable-next-line: return-type-mismatch
-		return parseDict(plist)
+		local pl = parseDict(plist)
+		return pl
+	end, function(err)
+		print(err)
 	end, plist)
 	if not suc then
-		if plist:match("Failed to parse") then
-			error(plist)
-		else
-			error "Failed to parse plist(Nothing to do with OpenCore, issue on config.plist side)"
-		end
+		error "Failed to parse plist"
 	end
 	return plist
 end
