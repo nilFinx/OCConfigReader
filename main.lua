@@ -32,6 +32,28 @@ errormsges = ""
 
 local plist = require "occr.floxlist"(data)
 
+local mtblnew = {}
+function mtblnew.__index(t, k)
+	return setmetatable({}, mtblnew)
+end
+
+local mtblorg = {}
+function mtblorg.__index(t, k)
+	spit(k.." does not exist in the plist")
+	return setmetatable({}, mtblnew)
+end
+
+local mtblapply
+mtblapply = function(t)
+	setmetatable(t, mtblorg)
+	for _, v in pairs(t) do
+		if type(v) == "table" then
+			mtblapply(v)
+		end
+	end
+end
+mtblapply(plist)
+
 plist.NVRAM.Add["7C"] = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"] -- 7C exists now
 
 local ssdts, drivers, kexts, tools, kextsarray, driversarray = {}, {}, {}, {}, {}, {}
