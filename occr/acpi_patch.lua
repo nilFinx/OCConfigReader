@@ -3,7 +3,6 @@ local injection = function(detections, order, plist)
 	detections["ACPI > Patch"] = {}
 	table.insert(order, 2, "ACPI > Patch") -- After "Info"
     for _, v in pairs(plist.ACPI.Patch) do
-        print(v.Enabled)
         if not v.Enabled then
             table.insert(detections["ACPI > Patch"], function() end) -- Add count, do nothing
         else
