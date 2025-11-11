@@ -180,5 +180,5 @@ end
 
 if errormsges ~= "" then
 	print "\27[31mWarning:"
-	print(errormsges:sub(1, -1))
+	print(errormsges:sub(1, -1).."\27[00m")
 end
