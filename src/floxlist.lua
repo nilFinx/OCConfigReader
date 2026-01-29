@@ -66,13 +66,16 @@ local function parse(plist)
 				return data[1].text or ""
 			end,
 			data = function(data)
-				return b64.decode(data[1].text)
+				local bindata = b64.decode(data[1].text)
+				return (bindata:gsub('.', function(c)
+					return string.format('%02x', string.byte(c))
+				end))
 			end,
 			integer = function(data)
 				return tonumber(data[1].text)
 			end
 		}
-		
+
 		local pl = parseDict(plist)
 		return pl
 	end, function(err)
