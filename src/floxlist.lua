@@ -1,4 +1,4 @@
-local xmlparser = require((...):match("(.+)[.]floxlist$") ..".xmlParser")
+local xmlparser = require "xmlparser"
 
 local types
 

@@ -1,40 +1,39 @@
 -- Each detections should return comment(nil if failed check), and count(true by default).
-local runme = function(plist, raw, kexts, tools, drivers, ssdts, kextsshow, kextsarray, driversarray)
-
+local runme = function(args)
+local plist = args.plist
+local kxts = args.kexts -- Sorry for this. I had to do it for refactor.
+local tls = args.tools
+local drvs = args.drivers
+local sdts = args.ssdts
 local function _kitchensinked(tocheck)
-	local kextstr = table.concat(kextsarray, " ")
 	local checked = {}
 	for _, v in pairs(tocheck) do
-		local m = kextstr:match(v)
-		if not m then
+		if not kxts.has[v] then
 			return
 		end
-		table.insert(checked, m)
+		table.insert(checked, v)
 	end
-	return table.concat(checked, ", ").." are all present"
+	local last = checked[#checked]
+	table.remove(checked, #checked)
+	return table.concat(checked, ", ").."and "..last.." are all present"
 end
-
-
 
 local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
-
-local order = {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
 local d = {
 	Info = {
 		function() -- Tiny bit messy, but it *works*
 			local smbios = plist.PlatformInfo.Generic.SystemProductName
-			local sbdata = sblist[smbios]
-			---@diagnostic disable-next-line: cast-local-type
-			minver = tonumber(sbdata[4]:match("[0-9]+[.][0-9]+") or sbdata[4]:match("[0-9]+"))
-			---@diagnostic disable-next-line: cast-local-type
-			maxver = tonumber(sbdata[5]:match("[0-9]+[.][0-9]+") or sbdata[5]:match("[0-9]+"))
-			return ("SMBIOS is %s, %s to %s (%s)"):format(smbios, sbdata[4], sbdata[5], sbdata[1]).."\n"..
-				"bootarg is "..bootarg.."\n"..
-				"SecureBootModel is "..plist.Misc.Security.SecureBootModel,
-				false
-		end,	
+			local sbdata = args.sblist[smbios]
+			return ("SMBIOS is %s, %s to %s (%s)"):format(smbios, sbdata[4], sbdata[5], sbdata[1])
+		end,
+		function()
+			return "bootarg is "..bootarg, false
+		end,
+		function()
+			return "SecureBootModel is "..plist.Misc.Security.SecureBootModel, false
+		end,
 		function()
 			for _, v in pairs(plist.Kernel.Patch) do
 				if v.Comment:match("AuthenticAMD") then
@@ -53,8 +52,8 @@ local d = {
 			end      -- Just works. One function call.
 		end,
 		function()
-			if drivers["OpenCanopy"] then
-				return "OpenCanopy is present (should be post-install stuff)"
+			if plist.Misc.Boot.PickerMode ~= "Builtin" then
+				return "PickerMode is "..plist.Misc.Boot.PickerMode
 			end
 		end,
 		function()
@@ -66,16 +65,26 @@ local d = {
 			if plist.Kernel.Quirks.XhciPortLimit then
 				return "XhciPortLimit is enabled(Catalina or older?)"
 			end
+		end,
+		function()
+			if drvs.has "OpenVariableRuntimeDxe" then
+				return "OpenVariableRuntimeDxe exists (only for UEFI systems)"
+			end
+		end,
+		function()
+			if drvs.has "OpenPartitionDxe" then
+				return "OpenPartitionDxe exists (only for UEFI systems)"
+			end
 		end
 	},
 	Oddities = {
 		function()
-			if tools.CleanNvram then
+			if tls.has "CleanNvram" then
 				return "CleanNvram is being used"
 			end
 		end,
 		function()
-			if drivers.OpenHfsPlus then
+			if drvs.has "OpenHfsPlus" then
 				return "OpenHfsPlus is being used"
 			end
 		end,
@@ -83,9 +92,9 @@ local d = {
 			local badkexts = {"USBPorts", "UTBDefault", "USBInjectAll", "(IO80211[a-zA-Z0-9]+) "}
 			local matches = {}
 			for _, v in pairs(badkexts) do
-				local match = table.concat(kextsarray, " "):match(v)
+				local match = kxts.has[v]
 				if match then
-					table.insert(matches, match)
+					table.insert(matches, v)
 				end
 			end
 			if matches[1] then
@@ -124,8 +133,8 @@ local d = {
 	},
 	Issues = {
 		function()
-			if ssdts["SSDT-EC"] then
-				for k in pairs(ssdts) do
+			if sdts.has "SSDT-EC" then
+				for k in pairs(sdts.enabled) do
 					if k:sub(1,8) == "SSDT-EC-" then
 						return "SSDTTime SSDT-EC is present, but prebuilt SSDT-EC is also present"
 					end
@@ -133,7 +142,7 @@ local d = {
 			end
 		end,
 		function()
-			if kexts.Lilu.Comment == "Patch engine" and kexts.Lilu.MinKernel == "8.0.0" then
+			if kxts.normal.Lilu.Comment == "Patch engine" and kxts.normal.Lilu.MinKernel == "8.0.0" then
 				return "OC Clean Snapshot or configurator equivalent is not done"
 			end
 		end,
@@ -143,7 +152,7 @@ local d = {
 			end
 		end,
 		function()
-			local audiopath = plist.DeviceProperties.Add["PciRoot(0x0)/Pci(0x1b,0x0)"] or {}
+			local audiopath = rawget(plist.DeviceProperties.Add, "PciRoot(0x0)/Pci(0x1b,0x0)") or {}
 			if audiopath["AAPL,ig-platform-id"] or audiopath["AAPL,snb-platform-id"] or audiopath["framebuffer-patch-enable"] then
 				return "iGPU properties are injected to audio device"
 			end
@@ -161,9 +170,9 @@ local d = {
 			end
 		end,
 		function()
-			if table.concat(driversarray):find("Hfs.+Hfs") then
+			if table.concat(drvs.enabled):find("Hfs.+Hfs") then
 				return "More than 2 HFS+ drivers exists"
-			elseif not table.concat(driversarray):find("Hfs") then
+			elseif not table.concat(drvs.enabled):find("Hfs") then
 				return "HFS+ driver is missing"
 			end
 		end,
@@ -174,17 +183,17 @@ local d = {
 			end
 		end,
 		function()
-			if ssdts.APIC and ssdts.DMAR and ssdts.SSDT1 and ssdts.SSDT then
+			if sdts.has.APIC and sdts.has.DMAR and sdts.has.SSDT1 and sdts.has.SSDT then
 				return "Machine's ACPI tables are being injected"
 			end
 		end,
 		function()
-			if not (kexts.VirtualSMC and kexts.VirtualSMC.Enabled) then
-				return "VirtualSMC is "..(kexts.VirtualSMC and "disabled" or "absent")
+			if not kxts.normal.VirtualSMC then
+				return "VirtualSMC is "..(kxts.has.VirtualSMC and "disabled" or "absent")
 			end	
 		end,
 		function()
-			for k in pairs(kexts) do
+			for k in pairs(kxts.normal) do
 				if k == "USBMap" or k == "UTBMap" or k == "USBPorts" or k == "UTBDefault" or k == "USBInjectAll" then
 					if trigger then
 						return "Two or more USB map Kexts detected"
@@ -196,7 +205,7 @@ local d = {
 		function()
 			local hasutb = false
 			local hastoolbox = false
-			for k in pairs(kexts) do
+			for k in pairs(kxts.normal) do
 				if k == "UTBMap" or k == "UTBDefault" then
 					hasutb = true
 				end
@@ -230,34 +239,33 @@ local d = {
 	},
 	["Kitchen sinked"] = {}, -- reserved
 	["Autotool/prebuilt/configurator"] = {
-		function() -- Thanks CorpNewt! -- DEAD: Thanks shitlify dev!
-			if plist.Misc.Boot.Timeout == 10 and plist.Misc.Debug.Target == 0 and plist.Misc.Boot.PickerMode == "External" 
-				and plist.NVRAM.Add["7C"]["prev-lang:kbd"] == "en:252" then
-				return "Failed specific autotool detection (V1, if you believe this config.plist is generated with latest tool, make an issue)"
-			end
-			return false -- This should not even trigger nowadays
-		end,
 		function()
 			if type(plist.UEFI.Drivers[1]) == "string" then
 				return "OpenCore is outdated(old Drivers schema)"
 			end
 		end,
 		function()
-			for _, v in pairs(kexts) do
-				if v.Comment:match("V[0-9.]+") then
-					return "One or more Kext comment has a version"
+			for _, v in pairs(kxts.normal) do
+				if v.Comment then
+					if v.Comment:match("V[0-9.]+") then
+						return "One or more Kext comment has a version"
+					end
+				else
+					return "One Kext literally does not have the version"
 				end
 			end
 		end,
 		function()
-			for _, v in pairs(kexts) do
-				if v.Comment == "" then
-					return "One or more Kext comment is empty"
+			for _, v in pairs(kxts.normal) do
+				if v.Comment then
+					if v.Comment == "" then
+						return "One or more Kext comment is empty"
+					end
 				end
 			end
 		end,
 		function()
-			if ssdts["MaLd0n"] then
+			if sdts["MaLd0n"] then
 				return "The EFI got a blessing by real MaLd0n", false
 			end
 			return false
@@ -269,8 +277,8 @@ local d = {
 			return false
 		end,
 		function()
-			if table.concat(drivers, ""):find("AptioFix2Drv") then
-				return "AptioFix detected", false -- What the fuck did you just fucking say about me, you little bitch? I'll have you know I graduated top of my class in the r/hackintosh Academy, and I've been involved in numerous secret raids on Tonymacx86, and I have over 300 confirmed roasts. I am trained in OsxAptioFix2Drv-free2000 warfare and I'm the top Hackintosher in the entire InsanelyMac armed forces. You are nothing to me but just another UniBeast user. I will wipe you the fuck out with precision the likes of which has never been seen before on this server, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of slavs across the former Soviet Union and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You're fucking dead, kid. I can be anywhere, anytime, and I can delete you in over seven hundred ways, and that's just with my Snow Leopard install. Not only am I extensively trained in unarmed macOS installs, but I have access to the entire arsenal of the Acidanthera repo and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clover isn’t that bad” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn't, you didn't, and now you're paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You're fucking dead, kiddo.
+			if table.concat(drvs, ""):find("AptioFix2Drv") then
+				return "AptioFix2Drv detected", false -- What the fuck did you just fucking say about me, you little bitch? I'll have you know I graduated top of my class in the r/hackintosh Academy, and I've been involved in numerous secret raids on Tonymacx86, and I have over 300 confirmed roasts. I am trained in OsxAptioFix2Drv-free2000 warfare and I'm the top Hackintosher in the entire InsanelyMac armed forces. You are nothing to me but just another UniBeast user. I will wipe you the fuck out with precision the likes of which has never been seen before on this server, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of slavs across the former Soviet Union and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You're fucking dead, kid. I can be anywhere, anytime, and I can delete you in over seven hundred ways, and that's just with my Snow Leopard install. Not only am I extensively trained in unarmed macOS installs, but I have access to the entire arsenal of the Acidanthera repo and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clover isn’t that bad” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn't, you didn't, and now you're paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You're fucking dead, kiddo.
 			end
 			return false
 		end
@@ -289,12 +297,16 @@ end
 kitchensinked("IntelMausi", "IntelSnowMausi")
 kitchensinked("AppleALC", "AppleALCU")
 kitchensinked("BrcmPatchRAM2", "BrcmPatchRAM3") -- Having those two already tells it well
-kitchensinked("WhateverGreen", "Noot[ed]*R[Xe]d?") -- Hacky, but it detects both
-kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM[1-3]?") -- If BrcmPatchRAM4 comes out, we will be doomed.
-kitchensinked("BlueToolFixup", "[a-zA-Z]+BluetoothInjector") -- Show the full name
-kitchensinked("AirportItlwm", " (Itlwm)") -- Messy, but at least it won't pickup AirportItlwm as Itlwm
+kitchensinked("WhateverGreen", "NootedRed")
+kitchensinked("WhateverGreen", "NootRX")
+kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM1")
+kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM2")
+kitchensinked("IntelBluetoothFirmware", "BrcmPatchRAM3") -- If BrcmPatchRAM4 comes out, we will be doomed.
+kitchensinked("BlueToolFixup", "IntelBluetoothInjector")
+kitchensinked("AirportItlwm", " Itlwm")
 kitchensinked("USBMap", "UTBMap")
 kitchensinked("UTBMap", "UTBDefault")
+kitchensinked("USBMap", "UTBDefault")
 
 kitchensinkedwithmsg("All VirtualSMC plugins are there (but it can be normal)",
 	"SMCProcessor", "SMCSuperIO", "SMCLightSensor", "SMCDellSensor", "SMCBatteryManager")
@@ -302,6 +314,7 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 
-return d, order -- Workaround to being only able to pass 1 arguments
+return d
 end
-return runme
+
+return {runme, {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}}

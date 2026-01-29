@@ -1,0 +1,259 @@
+local occr = {}
+local util = require "util"
+local sblist = require "smbios"
+local floxlist = require "floxlist"
+local dtcsrt = require "detections"
+---@diagnostic disable-next-line: deprecated
+local defaultdectsloader, order = (table.unpack or unpack)(dtcsrt)
+
+local mtblnew = {}
+function mtblnew.__index(t, k)
+	return setmetatable({}, mtblnew)
+end
+
+local mtblorg = {}
+function mtblorg.__index(t, k)
+	util.spit(k.." does not exist in the plist")
+	return setmetatable({}, mtblnew)
+end
+function mtblorg.__call(t)
+	return ""
+end
+
+local mtblapply -- This is necessary. Really.
+mtblapply = function(t)
+	setmetatable(t, mtblorg)
+	for _, v in pairs(t) do
+		if type(v) == "table" then
+			mtblapply(v)
+		end
+	end
+end
+
+local pllist = {}
+
+local function load_plugin(name)
+	local suc, fun pcall(function()require(""..name)end)
+	if suc then table.insert(pllist, fun) end
+end
+
+load_plugin "acpi_patch" -- Show ACPI patches
+
+load_plugin "proppy" -- Proprietary checks
+
+load_plugin "plugin" -- Default plugin name
+
+function occr.run(rawplist)
+local plist = floxlist(rawplist)
+mtblapply(plist)
+
+plist.NVRAM.Add["7C"] = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"] -- 7C exists now
+
+---@class kext
+local __ = {
+	Arch = "Any", -- sometimes x86_64, etc. abnormal.
+	BundlePath = "Example.kext",
+	Comment = "V6.9.0 | IAMNOTANOCATUSER", -- normally BundlePath or user specified
+	Enabled = true,
+	ExecutablePath = "Contents/MacOS/Example", --can be empty
+	MaxKernel = "12.34.5",
+	MinKernel = "5.43.21",
+	PlistPath = "Contents/Info.plist", -- Almost always this
+}
+
+---@type kext
+local __ = nil
+
+---@class kexts
+local kexts = {
+	normal = {Example = __},
+	plugin = {Example = __},
+	disabled = {
+		normal = {Example = __},
+		plugin = {Example = __},
+	},
+	has = {Example = true} -- Everything in name = true format
+}
+kexts.has.Example = nil
+
+---@class driver
+local __ = {
+	Arguments = "",
+	Comment = "Example.efi",
+	Enabled = true,
+	LoadEarly = true,
+	Path = "Example.efi",
+}
+
+---@type driver
+local __ = nil
+
+---@class drivers
+local drivers = {
+	enabled = {Example = __},
+	disabled = {Example = __},
+	has = {Example = true} -- Everything in name = true format
+}
+drivers.has.Example = nil
+
+---@class ssdt
+local __ = {
+	Comment = "SSDT-EXAMPLE.aml",
+	Enabled = true,
+	Path = "SSDT-EXAMPLE.aml"
+}
+
+---@type ssdt
+local __ = nil
+
+---@class ssdts
+local ssdts = {
+	enabled = {Example = __},
+	disabled = {Example = __},
+	has = {Example = true} -- Everything in name = true format
+}
+ssdts.has.Example = nil
+
+---@class tool
+local __ = {
+	Comment = "Example.efi",
+	RealPath = false,
+	Flavour = "Auto",
+	Name = "Example.efi",
+	TextMode = false,
+	Enabled = true,
+	Arguments = "",
+	Path = "Example.efi",
+	Auxiliary = true
+}
+
+---@type tool
+local __ = nil
+
+---@class tools
+local tools = {
+	enabled = {Example = __},
+	disabled = {Example = __},
+	has = {Example = true} -- Everything in name = true format
+}
+tools.has.Example = nil
+
+local __ = nil
+
+local smt = setmetatable
+local mt = {
+	__call = function (t, k)
+		return t[k]
+	end
+}
+smt(kexts.has, mt)
+smt(ssdts.has, mt)
+smt(drivers.has, mt)
+smt(tools.has, mt)
+
+for _, v in pairs(plist.ACPI.Add) do
+	local name = v.Path:match("(.+).aml")
+	ssdts[v.Enabled and "enabled" or "disabled"][name] = v
+	ssdts.has[name] = v.Enabled
+end
+
+if type(plist.UEFI.Drivers[1]) == "string" then
+	for _, v in pairs(plist.UEFI.Drivers) do
+		local name = v:match("(.+).efi")
+		drivers[v.Enabled and "enabled" or "disabled"][name] = v
+		drivers.has[name] = true -- Since this is an array
+	end
+else
+	for _, v in pairs(plist.UEFI.Drivers) do
+		local name = v.Path:match("(.+).efi")
+		drivers[v.Enabled and "enabled" or "disabled"][name] = v
+		drivers.has[name] = v.Enabled
+	end
+end
+---@param v kext
+for _, v in pairs(plist.Kernel.Add) do
+	local kextname = v.BundlePath:match "/?([^/]+).kext$"
+	local kxts = v.Enabled and kexts or kexts.disabled
+	kxts[v.BundlePath:match("/") and "plugin" or "normal"][kextname] = v
+	kexts.has[kextname] = v.Enabled
+end
+
+for _, v in pairs(plist.Misc.Tools) do
+	local name = v.Path:match("(.+).efi")
+	tools[v.Enabled and "enabled" or "disabled"][name] = v
+	tools.has[name] = v.Enabled
+end
+
+local suc, config = pcall(function() require "occrconfig" end)
+if not suc then
+	print("Warning: Cannot import config")
+	config = {}
+end
+
+---@class args
+local args = {
+	plist = plist,
+	rawplist = rawplist,
+	kexts = kexts,
+	tools = tools,
+	drivers = drivers,
+	ssdts = ssdts,
+
+	config = config,
+	checkorder = order,
+	sblist = sblist,
+}
+
+---@diagnostic disable-next-line: param-type-mismatch
+local dects = defaultdectsloader(args)
+for _, v in pairs(pllist) do
+	v(args)
+end
+
+---@class occrreturns
+local returns = {
+	result = {
+		Example = {
+			total = 5,
+			checked = 3,
+			result = {
+				"Hello world!"
+			}
+		}
+	},
+	order = order,
+	errormsges = "errors here"
+}
+returns.result.Example = nil
+
+---@diagnostic disable-next-line: param-type-mismatch
+for _, k in pairs(order) do
+	local v = dects[k]
+	if type(v) == "table" and next(v) then -- Skip when empty
+		local t = {}
+		local total, checked = 0, 0
+		for _, v in pairs(v) do
+			local suc, msg, check = pcall(v)
+			if suc then
+				if msg then
+					table.insert(t, msg)
+					if check ~= false then
+						checked = checked + 1
+					end
+				end
+				if check ~= false and msg ~= false then
+					total = total + 1
+				end
+			else
+				util.spit(msg)
+			end
+		end
+		returns.result[k] = {checked = checked, total = total, result = t}
+	end
+end
+
+returns.errormsges = util.geterrormsges()
+
+return returns, args
+end
+return occr
