@@ -103,7 +103,7 @@ end
 for _, k in pairs(returns.order) do
 	local t = returns.result[k]
 	if next(t.result) then
-		print(k..":")
+		print(("%s (%d/%d):"):format(k, t.checked, t.total))
 		for _, v in pairs(t.result) do
 			print(" "..v)
 		end
