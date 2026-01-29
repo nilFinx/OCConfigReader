@@ -1,4 +1,5 @@
 local xmlparser = require "xmlparser"
+local b64 = require "base64"
 
 local types
 
@@ -65,27 +66,7 @@ local function parse(plist)
 				return data[1].text or ""
 			end,
 			data = function(data)
-				local data = data[1].text
-				local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-				local t = {}
-				for i = 1, 64 do
-					t[b:sub(i, i)] = i - 1
-				end
-				local decoded = {}
-				for i = 1, #data, 4 do
-					local n = ((t[data:sub(i,i)] or 0) << 18)
-							| ((t[data:sub(i+1,i+1)] or 0) << 12)
-							| ((t[data:sub(i+2,i+2)] or 0) << 6)
-							| (t[data:sub(i+3,i+3)] or 0)
-					table.insert(decoded, string.format("%02x", (n >> 16) & 0xFF))
-					if data:sub(i+2,i+2) ~= "=" then
-						table.insert(decoded, string.format("%02x", (n >> 8) & 0xFF))
-					end
-					if data:sub(i+3,i+3) ~= "=" then
-						table.insert(decoded, string.format("%02x", n & 0xFF))
-					end
-				end
-				return string.upper(table.concat(decoded))
+				return b64.decode(data[1].text)
 			end,
 			integer = function(data)
 				return tonumber(data[1].text)
