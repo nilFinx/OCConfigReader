@@ -19,7 +19,7 @@ local function _kitchensinked(tocheck)
 end
 
 local trigger = false -- Reserved by two checks
-local bootarg = plist.NVRAM.Add["7C"]["boot-args"]
+local bootarg = plist.NVRAM.Add["7C"]["boot-args"] or ""
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
 local d = {
 	Info = {
