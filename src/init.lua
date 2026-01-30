@@ -2,9 +2,7 @@ local occr = {}
 local util = require "util"
 local sblist = require "smbios"
 local floxlist = require "floxlist"
-local dtcsrt = require "detections"
----@diagnostic disable-next-line: deprecated
-local defaultdectsloader, order = (table.unpack or unpack)(dtcsrt)
+local defaultdectsloader = require "detections"
 
 local mtblnew = {}
 function mtblnew.__index(t, k)
@@ -33,7 +31,7 @@ end
 local pllist = {}
 
 local function load_plugin(name)
-	local suc, fun pcall(function()require(""..name)end)
+	local suc, fun = pcall(function() return require(""..name) end)
 	if suc then table.insert(pllist, fun) end
 end
 
@@ -47,7 +45,9 @@ function occr.run(rawplist)
 local plist = floxlist(rawplist)
 mtblapply(plist)
 
-plist.NVRAM.Add["7C"] = plist.NVRAM.Add["7C436110-AB2A-4BBB-A880-FE41995C9F82"] -- 7C exists now
+
+---@deprecated Use util.SevenC
+plist.NVRAM.Add["7C"] = plist.NVRAM.Add[util.SevenC] -- 7C exists now
 
 ---@class kext
 local __ = {
@@ -200,12 +200,14 @@ local args = {
 	ssdts = ssdts,
 
 	config = config,
-	checkorder = order,
 	sblist = sblist,
+	util = util,
 }
 
 ---@diagnostic disable-next-line: param-type-mismatch
-local dects = defaultdectsloader(args)
+local dects, order = defaultdectsloader(args)
+args.detections = dects
+args.order = order
 for _, v in pairs(pllist) do
 	v(args)
 end
@@ -222,13 +224,13 @@ local returns = {
 		}
 	},
 	order = order,
-	errormsges = "errors here"
+	errormsges = "errors here",
 }
 returns.result.Example = nil
 
 ---@diagnostic disable-next-line: param-type-mismatch
 for _, k in pairs(order) do
-	local v = dects[k]
+	local v = args.detections[k]
 	if type(v) == "table" and next(v) then -- Skip when empty
 		local t = {}
 		local total, checked = 0, 0
