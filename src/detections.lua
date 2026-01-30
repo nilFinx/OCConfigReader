@@ -36,7 +36,7 @@ local d = {
 		end,
 		function()
 			for _, v in pairs(plist.Kernel.Patch) do
-				if v.Comment:match("AuthenticAMD") then
+				if v and rawget(v, "Comment") and v.Comment:match("AuthenticAMD") then
 					return "This is an AMD machine"
 				end
 			end
@@ -246,7 +246,7 @@ local d = {
 		end,
 		function()
 			for _, v in pairs(kxts.normal) do
-				if v.Comment then
+				if rawget(v, "Comment") and type(v.Comment) == "string" then
 					if v.Comment:match("V[0-9.]+") then
 						return "One or more Kext comment has a version"
 					end
@@ -257,10 +257,8 @@ local d = {
 		end,
 		function()
 			for _, v in pairs(kxts.normal) do
-				if v.Comment then
-					if v.Comment == "" then
-						return "One or more Kext comment is empty"
-					end
+				if not (rawget(v, "Comment") and type(v.Comment) == "string" and v.Comment == "") then
+					return "One or more Kext comment is empty"
 				end
 			end
 		end,
