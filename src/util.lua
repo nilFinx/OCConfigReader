@@ -1,4 +1,7 @@
-local utils = {}
+local utils = {
+	SevenC = "7C436110-AB2A-4BBB-A880-FE41995C9F82",
+	["7C"] = "7C436110-AB2A-4BBB-A880-FE41995C9F82"
+}
 
 local errormsges = ""
 
@@ -6,6 +9,14 @@ function utils.geterrormsges()
 	local r = errormsges
 	errormsges = ""
 	return r
+end
+
+function utils.keylist(t)
+	local tt = {}
+	for k in pairs(t) do
+		table.insert(tt, k)
+	end
+	return tt
 end
 
 -- Spit a warning without causing issues
