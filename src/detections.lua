@@ -19,7 +19,7 @@ local function _kitchensinked(tocheck)
 end
 
 local trigger = false -- Reserved by two checks
-local bootarg = plist.NVRAM.Add["7C"]["boot-args"] or ""
+local bootarg = plist.NVRAM.Add[args.util.SevenC]["boot-args"] or ""
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
 local d = {
 	Info = {
@@ -102,7 +102,7 @@ local d = {
 			end
 		end,
 		function()
-			if plist.NVRAM.Add["7C"]["csr-active-config"] == "030A0000" then
+			if plist.NVRAM.Add[args.util.SevenC]["csr-active-config"] == "030A0000" then
 				return "SIP is disabled" -- Nobody would disable the entire SIP over filesystem and kext signing, so...
 			end
 		end,
@@ -170,9 +170,9 @@ local d = {
 			end
 		end,
 		function()
-			if table.concat(drvs.enabled):find("Hfs.+Hfs") then
+			if table.concat(args.util.keylist(drvs.enabled)):find("Hfs.+Hfs") then
 				return "More than 2 HFS+ drivers exists"
-			elseif not table.concat(drvs.enabled):find("Hfs") then
+			elseif not table.concat(args.util.keylist(drvs.enabled)):find("Hfs") then
 				return "HFS+ driver is missing"
 			end
 		end,
@@ -277,7 +277,7 @@ local d = {
 			return false
 		end,
 		function()
-			if table.concat(drvs, ""):find("AptioFix2Drv") then
+			if drvs.has "AptioFix2Drv" then
 				return "AptioFix2Drv detected", false -- What the fuck did you just fucking say about me, you little bitch? I'll have you know I graduated top of my class in the r/hackintosh Academy, and I've been involved in numerous secret raids on Tonymacx86, and I have over 300 confirmed roasts. I am trained in OsxAptioFix2Drv-free2000 warfare and I'm the top Hackintosher in the entire InsanelyMac armed forces. You are nothing to me but just another UniBeast user. I will wipe you the fuck out with precision the likes of which has never been seen before on this server, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of slavs across the former Soviet Union and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You're fucking dead, kid. I can be anywhere, anytime, and I can delete you in over seven hundred ways, and that's just with my Snow Leopard install. Not only am I extensively trained in unarmed macOS installs, but I have access to the entire arsenal of the Acidanthera repo and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clover isn’t that bad” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn't, you didn't, and now you're paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You're fucking dead, kiddo.
 			end
 			return false
@@ -314,7 +314,7 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 
-return d
+return d, {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
 end
 
-return {runme, {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}}
+return runme
