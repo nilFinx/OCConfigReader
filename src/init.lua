@@ -60,12 +60,7 @@ load_plugin "proppy" -- Proprietary checks
 
 load_plugin "plugin" -- Default plugin name
 
-function occr.run(rawplist)
-local plist = floxlist(rawplist)
-mtblapply(plist)
 
----@deprecated Use util.SevenC
-plist.NVRAM.Add["7C"] = plist.NVRAM.Add[util.SevenC] -- 7C exists now
 
 ---@class kext
 local __ = {
@@ -78,6 +73,44 @@ local __ = {
 	MinKernel = "5.43.21",
 	PlistPath = "Contents/Info.plist", -- Almost always this
 }
+
+---@class driver
+local __ = {
+	Arguments = "",
+	Comment = "Example.efi",
+	Enabled = true,
+	LoadEarly = true,
+	Path = "Example.efi",
+}
+
+---@class ssdt
+local __ = {
+	Comment = "SSDT-EXAMPLE.aml",
+	Enabled = true,
+	Path = "SSDT-EXAMPLE.aml"
+}
+
+---@class tool
+local __ = {
+	Comment = "Example.efi",
+	RealPath = false,
+	Flavour = "Auto",
+	Name = "Example.efi",
+	TextMode = false,
+	Enabled = true,
+	Arguments = "",
+	Path = "Example.efi",
+	Auxiliary = true
+}
+
+function occr.run(rawplist)
+local plist = floxlist(rawplist)
+mtblapply(plist)
+
+missing, mashprinted = {}, {}
+
+---@deprecated Use util.SevenC
+plist.NVRAM.Add["7C"] = plist.NVRAM.Add[util.SevenC] -- 7C exists now
 
 ---@type kext
 local __ = nil
@@ -94,15 +127,6 @@ local kexts = {
 }
 kexts.has.Example = nil
 
----@class driver
-local __ = {
-	Arguments = "",
-	Comment = "Example.efi",
-	Enabled = true,
-	LoadEarly = true,
-	Path = "Example.efi",
-}
-
 ---@type driver
 local __ = nil
 
@@ -114,13 +138,6 @@ local drivers = {
 }
 drivers.has.Example = nil
 
----@class ssdt
-local __ = {
-	Comment = "SSDT-EXAMPLE.aml",
-	Enabled = true,
-	Path = "SSDT-EXAMPLE.aml"
-}
-
 ---@type ssdt
 local __ = nil
 
@@ -131,19 +148,6 @@ local ssdts = {
 	has = {Example = true} -- Everything in name = true format
 }
 ssdts.has.Example = nil
-
----@class tool
-local __ = {
-	Comment = "Example.efi",
-	RealPath = false,
-	Flavour = "Auto",
-	Name = "Example.efi",
-	TextMode = false,
-	Enabled = true,
-	Arguments = "",
-	Path = "Example.efi",
-	Auxiliary = true
-}
 
 ---@type tool
 local __ = nil
