@@ -18,10 +18,36 @@ local function _kitchensinked(tocheck)
 	return table.concat(checked, ", ").."and "..last.." are all present"
 end
 
+local function teststr(str)
+	if type(str) ~= "string" then
+		return "NON-EXISTENT OR INVALID TYPE"
+	end
+	return str
+end
+
 local trigger = false -- Reserved by two checks
 local bootarg = plist.NVRAM.Add[args.util.SevenC]["boot-args"] or ""
 local verbosed = bootarg:match("-v$") or bootarg:find("-v ")
 local d = {
+	Critical = {
+		function()
+			local platforminfo = plist.PlatformInfo.Generic
+			local badpi = platforminfo.SystemSerialNumber:sub(1, 4) == "W000" and
+			platforminfo.SystemProductName == "iMac19,1"
+			local badkex = true
+			if kxts.normal.Lilu then
+				badkex = kxts.normal.Lilu.Comment == "Patch engine" and
+				kxts.normal.Lilu.MinKernel == "8.0.0"
+			end
+			if badpi and badkex and bootarg=="-v keepsyms=1" then
+				return "This plist was likely not configured to begin with"
+			elseif badkex then
+				return "OC Clean Snapshot or configurator equivalent is not done"
+			elseif badpi then
+				return "PlatformInfo is not set up (dummy serial + iMac19,1)"
+			end
+		end
+	},
 	Info = {
 		function() -- Tiny bit messy, but it *works*
 			local smbios = plist.PlatformInfo.Generic.SystemProductName
@@ -32,7 +58,7 @@ local d = {
 			return "bootarg is "..bootarg, false
 		end,
 		function()
-			return "SecureBootModel is "..plist.Misc.Security.SecureBootModel, false
+			return "SecureBootModel is "..teststr(plist.Misc.Security.SecureBootModel), false
 		end,
 		function()
 			for _, v in pairs(plist.Kernel.Patch) do
@@ -53,7 +79,7 @@ local d = {
 		end,
 		function()
 			if plist.Misc.Boot.PickerMode ~= "Builtin" then
-				return "PickerMode is "..plist.Misc.Boot.PickerMode
+				return "PickerMode is "..teststr(plist.Misc.Boot.PickerMode)
 			end
 		end,
 		function()
@@ -75,7 +101,7 @@ local d = {
 			if drvs.has "OpenPartitionDxe" then
 				return "OpenPartitionDxe exists (only for UEFI systems)"
 			end
-		end
+		end,
 	},
 	Oddities = {
 		function()
@@ -129,7 +155,7 @@ local d = {
 					return "Verbose is enabled, but keepsyms is absent"
 				end
 			end
-		end
+		end,
 	},
 	Issues = {
 		function()
@@ -139,11 +165,6 @@ local d = {
 						return "SSDTTime SSDT-EC is present, but prebuilt SSDT-EC is also present"
 					end
 				end
-			end
-		end,
-		function()
-			if kxts.normal.Lilu.Comment == "Patch engine" and kxts.normal.Lilu.MinKernel == "8.0.0" then
-				return "OC Clean Snapshot or configurator equivalent is not done"
 			end
 		end,
 		function()
@@ -174,12 +195,6 @@ local d = {
 				return "More than 2 HFS+ drivers exists"
 			elseif not table.concat(args.util.keylist(drvs.enabled)):find("Hfs") then
 				return "HFS+ driver is missing"
-			end
-		end,
-		function()
-			local platforminfo = plist.PlatformInfo.Generic
-			if platforminfo.SystemProductName == "iMac19,1" and platforminfo.SystemSerialNumber:sub(1, 4) == "W000" then
-				return "PlatformInfo is not set up"
 			end
 		end,
 		function()
@@ -235,7 +250,7 @@ local d = {
 			if not ((b and c and not a) or (a and not (b or c))) then
 				return "Invalid MATs related Booter quirks combination"
 			end
-		end
+		end,
 	},
 	["Kitchen sinked"] = {}, -- reserved
 	["Autotool/prebuilt/configurator"] = {
@@ -279,7 +294,7 @@ local d = {
 				return "AptioFix2Drv detected", false -- What the fuck did you just fucking say about me, you little bitch? I'll have you know I graduated top of my class in the r/hackintosh Academy, and I've been involved in numerous secret raids on Tonymacx86, and I have over 300 confirmed roasts. I am trained in OsxAptioFix2Drv-free2000 warfare and I'm the top Hackintosher in the entire InsanelyMac armed forces. You are nothing to me but just another UniBeast user. I will wipe you the fuck out with precision the likes of which has never been seen before on this server, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of slavs across the former Soviet Union and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You're fucking dead, kid. I can be anywhere, anytime, and I can delete you in over seven hundred ways, and that's just with my Snow Leopard install. Not only am I extensively trained in unarmed macOS installs, but I have access to the entire arsenal of the Acidanthera repo and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clover isn’t that bad” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn't, you didn't, and now you're paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You're fucking dead, kiddo.
 			end
 			return false
-		end
+		end,
 	},
 }
 
@@ -312,7 +327,7 @@ kitchensinkedwithmsg("All VoodooI2C plugins are present",
 	"VoodooI2CAtmelMXT", "VoodooI2CELAN", "VoodooI2CFTE", "VoodooI2CHID", "VoodooI2CSynaptics")
 
 
-return d, {"Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
+return d, {"Critical","Info", "Oddities", "Issues", "Kitchen sinked", "Autotool/prebuilt/configurator"}
 end
 
 return runme
