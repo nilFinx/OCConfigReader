@@ -168,7 +168,7 @@ local d = {
 			end
 		end,
 		function()
-			if #(plist.DeviceProperties.Add["PciRoot(0x0)/Pci(0x2,0x0)"] or {}) > 15 then
+			if #(rawget(plist.DeviceProperties.Add, "PciRoot(0x0)/Pci(0x2,0x0)") or {}) > 15 then
 				return "iGPU properties are bloated"
 			end
 		end,
