@@ -1,29 +1,48 @@
 local occr = {}
+local missing = {}
 local util = require "util"
 local sblist = require "smbios"
 local floxlist = require "floxlist"
 local defaultdectsloader = require "detections"
 
-local mtblnew = {}
-function mtblnew.__index(t, k)
-	return setmetatable({}, mtblnew)
+local mashprinted = {}
+local sf
+sf = function(t, k, pureset)
+	local mt = {
+		__index = sf,
+		__call = function() return "" end,
+		_k = {}
+	}
+	local uk = (getmetatable(t) or {})._k
+	if uk then 
+		for _, v in pairs(uk) do
+			table.insert(mt._k, v)
+		end
+	end
+	if k then
+		table.insert(mt._k, k)
+	end
+	if not pureset then
+		local mash = table.concat(mt._k, ".") or k
+		mash = mash ~= "" and mash or k
+		if mash and mash ~= "" and not mashprinted[mash] then
+			table.insert(missing, mash)
+			mashprinted[mash] = true
+		end
+	end
+	local o = setmetatable(pureset and t or {}, mt)
+	if not pureset then rawset(t, k, o) end
+
+	return o
 end
 
-local mtblorg = {}
-function mtblorg.__index(t, k)
-	util.spit(k.." does not exist in the plist")
-	return setmetatable({}, mtblnew)
-end
-function mtblorg.__call(t)
-	return ""
-end
 
 local mtblapply -- This is necessary. Really.
-mtblapply = function(t)
-	setmetatable(t, mtblorg)
-	for _, v in pairs(t) do
+function mtblapply(t, k)
+	sf(t, k, true)
+	for k, v in pairs(t) do
 		if type(v) == "table" then
-			mtblapply(v)
+			mtblapply(v, k)
 		end
 	end
 end
@@ -44,7 +63,6 @@ load_plugin "plugin" -- Default plugin name
 function occr.run(rawplist)
 local plist = floxlist(rawplist)
 mtblapply(plist)
-
 
 ---@deprecated Use util.SevenC
 plist.NVRAM.Add["7C"] = plist.NVRAM.Add[util.SevenC] -- 7C exists now
@@ -151,6 +169,30 @@ smt(ssdts.has, mt)
 smt(drivers.has, mt)
 smt(tools.has, mt)
 
+local ensure = {
+	ACPI = {Add = {}},
+	UEFI = {Drivers = {}},
+	Kernel = {Add = {}},
+	Misc = {Tools = {}},
+}
+
+local function ef(t, o, p)
+	local p = p or ""
+	for k, v in pairs(t) do
+		if not rawget(o, k) then
+			if type(v) == "table" and next(v) then
+				ef(v, o, p..k..".")
+			else
+				o[k] = v
+				mashprinted[p..k] = true
+				table.insert(missing, p..k)
+			end
+		end
+	end
+end
+
+ef(ensure, plist)
+
 for _, v in pairs(plist.ACPI.Add) do
 	local name = v.Path:match("(.+).aml")
 	ssdts[v.Enabled and "enabled" or "disabled"][name] = v
@@ -223,9 +265,11 @@ local returns = {
 			}
 		}
 	},
+	missing = missing,
 	order = order,
-	errormsges = "errors here",
+	errormsges = {"error here", "stack trace"},
 }
+returns.errormsges = {}
 returns.result.Example = nil
 
 ---@diagnostic disable-next-line: param-type-mismatch
