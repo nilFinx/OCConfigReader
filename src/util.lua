@@ -3,11 +3,11 @@ local utils = {
 	["7C"] = "7C436110-AB2A-4BBB-A880-FE41995C9F82"
 }
 
-local errormsges = ""
+local errormsges = {}
 
 function utils.geterrormsges()
 	local r = errormsges
-	errormsges = ""
+	errormsges = {}
 	return r
 end
 
@@ -21,20 +21,20 @@ end
 
 -- Spit a warning without causing issues
 function utils.spit(msg)
-	errormsges = errormsges..msg.."\n"
+	table.insert(errormsges, {msg, debug.traceback(nil, 2)})
 end
 
 -- Assert spit
 function utils.aspit(condition, msg)
 	if not condition then
-		errormsges = errormsges..msg.."\n"
+		utils.spit(msg)
 	end
 	return condition
 end
 
 -- Spit that thang and return an empty table
 function utils.nulltable(msg)
-	errormsges = errormsges..msg.."\n"
+	utils.spit(msg)
 	return {}
 end
 
