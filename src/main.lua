@@ -18,8 +18,10 @@ local function assert(cond, msg)
 	end
 end
 
-assert(_VERSION ~= "Lua 5.1", "LuaJIT/5.1 is unsupported")
 assert(arg[1], "OCConfigReader <smbios or path/to/config.plist>")
+
+local debugging = arg[1] == "-d" or
+	arg[2] == "-d"
 
 -- AaBcDeF1234,1
 if arg[1]:match("^%u%S+%d+,%d$") then
@@ -69,6 +71,19 @@ local function show(name, tbl)
 	end
 end
 
+local function parsedectlist(k)
+	local t = returns.result[k]
+	if next(t.result) then
+		print(("%s (%d/%d):"):format(k, t.checked, t.total))
+		for _, v in pairs(t.result) do
+			print(" "..v)
+		end
+		print("")
+	end
+end
+
+parsedectlist("Critical")
+
 show("Kexts", data.kexts.normal)
 show("Kexts (plugin)", data.kexts.plugin)
 show("Kexts (disabled)", data.kexts.disabled.normal)
@@ -101,17 +116,22 @@ if next(data.plist.DeviceProperties.Add) then
 end
 
 for _, k in pairs(returns.order) do
-	local t = returns.result[k]
-	if next(t.result) then
-		print(("%s (%d/%d):"):format(k, t.checked, t.total))
-		for _, v in pairs(t.result) do
-			print(" "..v)
-		end
-		print("")
+	if k ~= "Critical" then
+		parsedectlist(k)
 	end
 end
 
 if #returns.errormsges ~= 0 then
 	print "\27[33mWarning:"
-	print(returns.errormsges.."\27[00m")
+	for _, v in pairs(returns.errormsges) do
+		print(v[1])
+		if debugging then print(v[2]) end
+	end
+	print "\27[00m"
+end
+
+if #returns.missing ~= 0 then
+	print "\27[00mWas missing:"
+	print(table.concat(returns.missing, "\n"))
+	print "\27[00m"
 end
