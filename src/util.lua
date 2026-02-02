@@ -21,7 +21,8 @@ end
 
 -- Spit a warning without causing issues
 function utils.spit(msg)
-	table.insert(errormsges, {msg, debug.traceback(nil, 2)})
+	print(debug.traceback("", 2))
+	table.insert(errormsges, {msg, debug.traceback("", 2):sub(2)})
 end
 
 -- Assert spit
